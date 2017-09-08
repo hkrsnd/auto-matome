@@ -27,13 +27,6 @@
     )
   )
 
-(defn take1000
-  [vec]
-  (if (> (count vec) 1000)
-    (take 999 vec)
-    vec
-  ))
-
 ;; .net ありなしの場合がある
 (defn parse-ids
   [strids]
@@ -68,11 +61,11 @@
         re-id #"(ID:)(.+)"
         re-date #"\d+\/\d+\/\d+"
         re-time #"\d+:\d+:\d+\.\d+"
+        re-name #"(ID)()"
         nums (filter #(not= % nil) (map 
                                     #(second (re-find re-num %))
                                     dts))
         ;; TODO
-        names (filter #(not= % nil) (map #(-> % (partial re-find re-id) (partial re-find re-date)) dts))
         ids (parse-ids (filter #(not= % nil) (map 
                                    #(nth (re-find re-id %) 2)
                                    dts)))
@@ -83,10 +76,15 @@
                                      #(re-find re-time %)
                                      dts))
         date-times (join-dates-times dates times)
-        zipped (apply map list [nums names date-times ids contents])
+        zipped (apply map list [nums ids date-times contents])
         ]
-    zipped
-  ))
+    (map #(struct scr/response
+                  (nth % 0)
+                  (nth % 1)
+                  (nth % 2)
+                  (nth % 3)
+                  ) zipped)
+    ))
 
 (defn test01
   [url]

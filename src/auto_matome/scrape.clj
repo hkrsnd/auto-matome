@@ -16,7 +16,7 @@
         )
   (:import [org.htmlcleaner HtmlCleaner CompactXmlSerializer]))
 
-(defstruct response :num :name :datetime :id :content)
+(defstruct response :num :id :datetime :content)
 (defstruct thread :url :responses)
 
 (defn get-html-resource
@@ -61,7 +61,7 @@
         ids (map #(-> % parse-date-id :id) date-id-strs)
         contents (filter #(string? %)
                          (map #(-> % :content first) (en/select matome-src [:.mainmore :.t_b])))
-        zipped (apply map list [nums names datetimes ids contents])
+        zipped (apply map list [nums ids datetimes contents])
         ]
 ;    (println contents)
 ;    (println zipped)
