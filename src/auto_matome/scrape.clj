@@ -17,6 +17,7 @@
   (:import [org.htmlcleaner HtmlCleaner CompactXmlSerializer]))
 
 (defstruct response :num :name :datetime :id :content)
+(defstruct thread :url :responses)
 
 (defn get-html-resource
   [url]
@@ -62,6 +63,8 @@
                          (map #(-> % :content first) (en/select matome-src [:.mainmore :.t_b])))
         zipped (apply map list [nums names datetimes ids contents])
         ]
+;    (println contents)
+;    (println zipped)
     (map #(struct response
                   (nth % 0)
                   (nth % 1)
@@ -72,11 +75,43 @@
     
     ))
 
+;; get each threds's urls from home url and number of pages
+(defn get-thread-urls
+  [home-url n]
+  (defn get-thread-urls-loop
+    [home-url n count]
+    (if (> count n)
+      []
+      (let [url (if (= count 1)
+                  home-url
+                  (str/join [home-url "?p=" (str count)])
+                  )
+            src (get-html-resource url)
+            tmp1  (map #(-> % :content first) (en/select src [:.titlebody]))
+            tmp2 (flatten (map #(-> % :content first) tmp1))
+            thread-urls (map #(-> % :attrs :href) tmp2)]
+        (cons thread-urls (get-thread-urls-loop home-url n (+ count 1)))
+        )))
+  (flatten (get-thread-urls-loop home-url n 1))
+  )
+
+
 (defn test02
   [url]
-  (let [src (get-html-resource url)]
-;    (get-original-thread-url src)
-    (get-matome-responses src)
+  (let [
+        thread-urls (get-thread-urls url 2)
+        srcs (map #(get-html-resource %) thread-urls)
+        ]
+                                        ;   (get-original-thread-url src)
+    ;(doall (map #(println %) thread-urls))
+;   (map #(get-html-resource %) thread-urls)
+;    (map (fn [x]
+ ;         (println x)
+  ;        ))
+  ; (get-matome-responses (get-html-resource "http://blog.livedoor.jp/dqnplus/archives/1938938.html"))
+   ;(get-html-resource "http://blog.livedoor.jp/dqnplus/archives/1938938.html")
+    (doall (map #(get-matome-responses %) srcs))
+;;    thread-urls
     )
   )
 

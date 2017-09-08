@@ -50,11 +50,12 @@
   (take 100 (wc-result words)))
 
 (require '[auto-matome.scrape :as scr])
-
+(require '[auto-matome.scrape-origin :as scro])
 
 (defn -main
   [& args]
-  (prn (scr/test02 "http://blog.livedoor.jp/dqnplus/archives/1938594.html"))
+                                        ;  (prn (scr/test02 "http://blog.livedoor.jp/dqnplus/"))
+  (scro/test01 "http://hayabusa3.2ch.sc/test/read.cgi/news/1504773906/")
   )
 ;  (println "===== Simple Pattern =====")
 ;  (doseq [t (morphological-analysis-sentence "黒い大きな瞳の男の娘")]
@@ -74,3 +75,4 @@
 ;;    (view (bar-chart (keys a(top10 words)) (vals (top10 words))))
 ;;    (save (bar-chart (keys (top10 words)) (vals (top10 words))) "natume.png" :width 600)
 ;;    (save (bar-chart (keys (top100 words)) (vals (top100 words))) "natume_zip.png" :width 600)))
+
