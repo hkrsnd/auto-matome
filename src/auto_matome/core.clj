@@ -55,7 +55,7 @@
 (defn -main
   [& args]
                                         ;  (prn (scr/test02 "http://blog.livedoor.jp/dqnplus/"))
-  (scro/test01 "http://hayabusa3.2ch.sc/test/read.cgi/news/1504773906/")
+  (scr/test02 "http://blog.livedoor.jp/dqnplus/")
   )
 ;  (println "===== Simple Pattern =====")
 ;  (doseq [t (morphological-analysis-sentence "黒い大きな瞳の男の娘")]

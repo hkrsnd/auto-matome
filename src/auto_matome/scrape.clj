@@ -70,10 +70,27 @@
                   (nth % 1)
                   (nth % 2)
                   (nth % 3)
-                  (nth % 4)
                   ) zipped)
     
     ))
+
+(defn select-hayabusa-thread-urls
+  [urls]
+  ;; select threads which has a domain hayabusa3.2ch.sc in original url
+  (defn is-hayabusa-thread
+    [url]
+    (println url)
+    (let [re-hayabusa #".*hayabusa3\.2ch\.sc.*"
+        hayabusa-url (re-find re-hayabusa url)]
+      (if (= nil hayabusa-url)
+        false
+        true
+        )
+      ))
+  (let [ori-urls (map #(-> % get-html-resource get-original-thread-url) urls)]
+    (filter #(is-hayabusa-thread %) ori-urls)
+    )
+  )
 
 ;; get each threds's urls from home url and number of pages
 (defn get-thread-urls
@@ -87,21 +104,25 @@
                   (str/join [home-url "?p=" (str count)])
                   )
             src (get-html-resource url)
-            tmp1  (map #(-> % :content first) (en/select src [:.titlebody]))
-            tmp2 (flatten (map #(-> % :content first) tmp1))
-            thread-urls (map #(-> % :attrs :href) tmp2)]
+            thread-urls-tmp (-> src (en/select [:a.continues]) flatten)
+            thread-urls (map #(-> % :attrs :href) thread-urls-tmp)]
+            ;tmp1  (map #(-> % :content first) (en/select src [:.titlebody]))
+            ;tmp2 (flatten (map #(-> % :content first) tmp1))
+            ;thread-urls (map #(-> % :attrs :href) tmp2)]
         (cons thread-urls (get-thread-urls-loop home-url n (+ count 1)))
         )))
-  (flatten (get-thread-urls-loop home-url n 1))
+  (flatten
+   (get-thread-urls-loop home-url n 1))
   )
-
 
 (defn test02
   [url]
   (let [
-        thread-urls (get-thread-urls url 2)
-        srcs (map #(get-html-resource %) thread-urls)
+        thread-urls (get-thread-urls url 1)
+        ;srcs (map #(get-html-resource %) thread-urls)
         ]
+
+    (select-hayabusa-thread-urls thread-urls)
                                         ;   (get-original-thread-url src)
     ;(doall (map #(println %) thread-urls))
 ;   (map #(get-html-resource %) thread-urls)
@@ -110,7 +131,7 @@
   ;        ))
   ; (get-matome-responses (get-html-resource "http://blog.livedoor.jp/dqnplus/archives/1938938.html"))
    ;(get-html-resource "http://blog.livedoor.jp/dqnplus/archives/1938938.html")
-    (doall (map #(get-matome-responses %) srcs))
+    ;(doall (map #(get-matome-responses %) srcs))
 ;;    thread-urls
     )
   )

@@ -12,7 +12,7 @@
         )
   (:import [org.htmlcleaner HtmlCleaner CompactXmlSerializer]))
 
-;;;元スレのスクレイピング
+;; scrape an original thread
 (defn get-html-resource
   [url]
   (scr/get-html-resource url))
