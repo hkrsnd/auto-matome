@@ -74,6 +74,7 @@
     
     ))
 
+;; url filter by domain hayabusa3.2ch.sc
 (defn select-hayabusa-thread-urls
   [urls]
   ;; select threads which has a domain hayabusa3.2ch.sc in original url
