@@ -9,6 +9,7 @@
             )
   (:use [clojure.data.zip.xml]
         [clojure.java.io]
+        [auto-matome.thread]
         )
   (:import [org.htmlcleaner HtmlCleaner CompactXmlSerializer]))
 
@@ -52,6 +53,7 @@
        (remove #(zero? (mod (first %) n)))
        (map second)))
 
+;; get a list of struct response corresponds to reponses in original thread
 (defn get-responses
   [src]
   (let [contents (map #(parse-response %) (en/select src [:html :body :dl :dd]))
@@ -78,7 +80,7 @@
         date-times (join-dates-times dates times)
         zipped (apply map list [nums ids date-times contents])
         ]
-    (map #(struct scr/response
+    (map #(struct response
                   (nth % 0)
                   (nth % 1)
                   (nth % 2)

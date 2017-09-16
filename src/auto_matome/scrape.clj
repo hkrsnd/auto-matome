@@ -13,11 +13,11 @@
                                         ;[clojure.zip-filter.xml :as zf]
   (:use [clojure.data.zip.xml]
         [clojure.java.io]
+        [auto-matome.thread]
         )
   (:import [org.htmlcleaner HtmlCleaner CompactXmlSerializer]))
 
-(defstruct response :num :id :datetime :content)
-(defstruct thread :url :responses)
+
 
 (defn get-html-resource
   [url]

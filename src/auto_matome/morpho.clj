@@ -38,7 +38,6 @@
 
 (defn word-count [words]
  (reduce (fn [words word] (assoc words word (inc (get words word 0))))
-  {}
   words))
 
 (defn wc-result [words]
