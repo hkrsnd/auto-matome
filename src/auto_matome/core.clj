@@ -29,7 +29,7 @@
     )
   )
 
-(defn make-dictionary-from-text
+(defn make-words-set-from-text
   [file-path]
   (let [contents (io/read-contents file-path)
         analyzed (map #(-> % morphological-analysis-sentence) contents)
@@ -37,17 +37,39 @@
     words-set
   ))
 
+(defn from-set-to-dictionary
+  [words-set]
+  (let [zipped (map-indexed #(vector %1 %2) words-set)]
+    (loop [result {} tmp-zipped zipped]
+      (let [zip (first tmp-zipped)]
+        (if (empty? zip)
+          result
+          (recur (assoc result (second zip) (first zip)) (rest tmp-zipped)))))))
+
+;  (let [size (count words-set)
+;        range (range 1 size)
+;        zipped (apply map list [words-set range])]
+;;    (println zipped)
+;    (loop [result {} zip (first zipped)]
+;      (println zip)
+;      (if (= zip nil)
+;        result
+;        (recur (assoc result (first zip) (second zip)) (rest zipped))
+;        )
+;      )
+;    )
+;  )
+
 (defn -main
   [& args]
-  (get-responses)
-  )
+  (get-responses))
 
 (defn test01
   []
   (let [origin-url "http://hayabusa3.2ch.sc/test/read.cgi/news/1505522180/"
         responses (-> origin-url scr/get-html-resource scro/get-responses)
         contents (map #(-> % :content) responses)]
-    (io/write-strings contents)
+    (io/write-strings contents contents-resource)
     )
   )
 
@@ -66,24 +88,29 @@
 
 (defn test04
   []
-  (make-dictionary-from-text contents-resource))
+  (make-words-set-from-text contents-resource))
 
 (defn test05
   []
   (let [responses (get-responses)
         contents (map #(-> % :content) responses)
         buffer (io/write-strings contents contents-resource)
-        words (make-dictionary-from-text contents-resource)]
+        words (make-words-set-from-text contents-resource)]
   (io/write-words words dictionary-path)
   ))
 
 (defn test06
   []
-  (let [contents (io/read-contents contents-resource)
-        buffer (io/write-strings contents contents-resource)
-        words (make-dictionary-from-text contents-resource)]
+  (let [;contents (io/read-contents contents-resource)
+        words (make-words-set-from-text contents-resource)]
     (io/write-words words dictionary-path)
     ))
+
+(defn test07
+  []
+  (let [words (make-words-set-from-text contents-resource)]
+    (from-set-to-dictionary words)
+  ))
 ;  (println "===== Simple Pattern =====")
 ;  (doseq [t (morphological-analysis-sentence "黒い大きな瞳の男の娘")]
 ;    (println t))
