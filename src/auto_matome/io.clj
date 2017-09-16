@@ -1,14 +1,23 @@
 (ns auto-matome.io
+  (:require [clojure.string :as str])
   (:use [clojure.java.io])
   (:import (java.io PrintWriter)
            (java.io FileInputStream))
   )
 
 (defn write-strings
-  [strs]
-  (with-open [w (writer "resource/contents.txt")]
+  [strs file-path]
+  (with-open [w (writer file-path)]
     (doseq [line strs]
       (.write w line)
+      ))
+  )
+
+(defn write-words
+  [strs file-path]
+  (with-open [w (writer file-path)]
+    (doseq [line strs]
+      (.write w (str/join [line ","]))
       ))
   )
 

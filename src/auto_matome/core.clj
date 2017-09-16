@@ -17,6 +17,8 @@
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
 (def page-num 1)
+(def contents-resource "resource/contents.txt")
+(def dictionary-path "resource/dictionary.txt")
 
 (defn get-responses
   []
@@ -26,6 +28,14 @@
      (doall (map #(-> % scr/get-html-resource scro/get-responses) origin-urls)))
     )
   )
+
+(defn make-dictionary-from-text
+  [file-path]
+  (let [contents (io/read-contents file-path)
+        analyzed (map #(-> % morphological-analysis-sentence) contents)
+        words-set (set (flatten (map (fn [x] (map (fn [y] (first y)) x)) analyzed)))]
+    words-set
+  ))
 
 (defn -main
   [& args]
@@ -54,7 +64,26 @@
     (io/write-strings contents)
     ))
 
+(defn test04
+  []
+  (make-dictionary-from-text contents-resource))
 
+(defn test05
+  []
+  (let [responses (get-responses)
+        contents (map #(-> % :content) responses)
+        buffer (io/write-strings contents contents-resource)
+        words (make-dictionary-from-text contents-resource)]
+  (io/write-words words dictionary-path)
+  ))
+
+(defn test06
+  []
+  (let [contents (io/read-contents contents-resource)
+        buffer (io/write-strings contents contents-resource)
+        words (make-dictionary-from-text contents-resource)]
+    (io/write-words words dictionary-path)
+    ))
 ;  (println "===== Simple Pattern =====")
 ;  (doseq [t (morphological-analysis-sentence "黒い大きな瞳の男の娘")]
 ;    (println t))
