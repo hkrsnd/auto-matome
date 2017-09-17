@@ -17,7 +17,7 @@
 (require '[auto-matome.io :as io])
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
-(def page-num 50)
+(def page-num 3)
 (def contents-resource "resource/contents.txt")
 (def contents-resource-base "resource/contents")
 (def original-urls-path "resource/original-urls.txt")
@@ -67,12 +67,67 @@
   [original-urls]
   (io/write-strings-line original-urls original-urls-path))
 
+(defn read-original-urls
+  []
+  (io/read-contents original-urls-path))
+
+(defn record-responses
+  [responses file-path]
+  (let [res-strs (map #(response-to-string %) responses)]
+    (io/write-strings res-strs file-path)
+    )
+  )
+
+(defn record-responses-list-to-indexed-file
+  [original-responses-list] ; this would be read from resource file
+  (let [indexed-responses-list (map-indexed #(vector %1 %2) original-responses-list)]
+    (pmap (fn [index-and-responses]
+            (let[index (first index-and-responses)
+                 responses (second index-and-responses)
+                 num-of-responses (count responses)
+                 record-path (str/join ["resource/original-thread-" index ".csv"])
+                 ]
+              (println record-path)
+              (record-responses responses record-path)
+              )) indexed-responses-list)
+    )
+  )
+
 (defn test01
   []
   (let [matome-thread-urls (get-matome-thread-urls)
         original-thread-urls (get-original-thread-urls matome-thread-urls)]
     (record-original-urls original-thread-urls)
     ))
+
+(defn test02
+  []
+  (let [original-urls (read-original-urls)
+        original-responses-list (get-responses-each-original-threads original-urls)
+        ;indexes (range 1 (count original-responses-list))
+        indexed-responses-list (map-indexed #(vector %1 %2) original-responses-list)
+        ;record-path (map #(str/join ["original-thread-" (str/str (first %))]) indexed-responses)
+        ]
+    (pmap (fn [index-and-responses]
+            (let[index (first index-and-responses)
+                 responses (second index-and-responses)
+                 num-of-responses (count responses)
+                 record-path (str/join ["resource/original-thread-" index ".csv"])
+                 ]
+              (println record-path)
+              (record-responses responses record-path)
+              )) indexed-responses-list)
+    )
+  )
+
+(defn test03
+  []
+  (let [original-urls (read-original-urls)
+        original-responses-list (get-responses-each-original-threads original-urls)
+        ]
+    (record-responses-list-to-indexed-file original-responses-list)
+    )
+  )
 
 ;(defn record-original-urls
 ;  []

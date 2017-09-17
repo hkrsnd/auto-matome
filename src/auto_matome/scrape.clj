@@ -21,7 +21,10 @@
 
 (defn get-html-resource
   [url]
-  (en/html-resource (reader url :encoding "JISAutoDetect")))
+  (try
+    (en/html-resource (reader url :encoding "JISAutoDetect"))
+    (catch Exception e nil)
+    ))
 
 (defn get-original-thread-url
   [html-src]
