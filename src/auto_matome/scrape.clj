@@ -14,9 +14,9 @@
   (:use [clojure.data.zip.xml]
         [clojure.java.io]
         [auto-matome.thread]
+        [auto-matome.regex]
         )
   (:import [org.htmlcleaner HtmlCleaner CompactXmlSerializer]))
-
 
 
 (defn get-html-resource
@@ -31,21 +31,23 @@
                    (first
                     (en/select html-src
                                [:.mainmore :.aa :span]))))]
-    (re-find re moto-url)))
+      (re-find-ex re moto-url))
+    )
 
 (defn parse-response-num
   [str-num] ; "n: "
   (let [re #"\d+"]
-    (re-find re str-num)))
+      (re-find-ex re str-num)
+      ))
 
 (defn parse-date-id
   [date-id-str] ; " 2017/09/04(月) 08:58:42.97 ID:8AaMbvih0"
   (let [re-date #"\d+\/\d+\/\d+"
         re-time #"\d+:\d+:\d+\.\d+"
         re-id #"(ID:)(.+)"
-        date (re-find re-date date-id-str)
-        time (re-find re-time date-id-str)
-        id (last (re-find re-id date-id-str))
+        date (re-find-ex re-date date-id-str)
+        time (re-find-ex re-time date-id-str)
+        id (last (re-find-ex re-id date-id-str))
         ]
     {:datetime (str/join [date "-" time])
      :id id}
@@ -53,26 +55,27 @@
 
 (defn get-matome-responses
   [matome-src]
-  (let [num-name-date-ids (map #(:content %) (en/select matome-src [:.mainmore :.t_h]))
-        nums (map #(-> % first parse-response-num) num-name-date-ids)
-        names (map #(-> % second :content first) num-name-date-ids)
-        date-id-strs (map #(-> % last :content first) num-name-date-ids )
-        datetimes (map #(-> % parse-date-id :datetime) date-id-strs)
-        ids (map #(-> % parse-date-id :id) date-id-strs)
-        contents (filter #(string? %)
-                         (map #(-> % :content first) (en/select matome-src [:.mainmore :.t_b])))
+    (let [num-name-date-ids (map #(:content %) (en/select matome-src [:.mainmore :.t_h]))
+          nums (map #(-> % first parse-response-num) num-name-date-ids)
+          names (map #(-> % second :content first) num-name-date-ids)
+          date-id-strs (map #(-> % last :content first) num-name-date-ids )
+          datetimes (map #(-> % parse-date-id :datetime) date-id-strs)
+          ids (map #(-> % parse-date-id :id) date-id-strs)
+          contents (filter #(string? %)
+                           (map #(-> % :content first) (en/select matome-src [:.mainmore :.t_b])))
         zipped (apply map list [nums ids datetimes contents])
-        ]
-;    (println contents)
-;    (println zipped)
-    (map #(struct response
-                  (nth % 0)
-                  (nth % 1)
-                  (nth % 2)
-                  (nth % 3)
-                  ) zipped)
-    
-    ))
+          ]
+                                        ;    (println contents)
+                                        ;    (println zipped)
+      (map #(struct response
+                    (nth % 0)
+                    (nth % 1)
+                    (nth % 2)
+                    (nth % 3)
+                    ) zipped)
+      
+      )
+    )
 
 ;; url filter by domain hayabusa3.2ch.sc
 (defn select-hayabusa-thread-urls
@@ -81,13 +84,14 @@
   (defn is-hayabusa-thread
     [url]
     (println url)
-    (let [re-hayabusa #".*hayabusa3\.2ch\.sc.*"
-        hayabusa-url (re-find re-hayabusa url)]
-      (if (= nil hayabusa-url)
-        false
-        true
+      (let [re-hayabusa #".*hayabusa3\.2ch\.sc.*"
+            hayabusa-url (re-find-ex re-hayabusa url)]
+        (if (= nil hayabusa-url)
+          false
+          true
+          )
         )
-      ))
+      )
   (let [ori-urls (map #(-> % get-html-resource get-original-thread-url) urls)]
     (filter #(is-hayabusa-thread %) ori-urls)
     )
