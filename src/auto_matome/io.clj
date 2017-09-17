@@ -1,6 +1,7 @@
 (ns auto-matome.io
   (:require [clojure.string :as str])
-  (:use [clojure.java.io])
+  (:use [clojure.java.io]
+        [auto-matome.thread])
   (:import (java.io PrintWriter)
            (java.io FileInputStream))
   )
@@ -37,4 +38,14 @@
       (if (nil? line)
         result
         (recur (.readLine r) (conj result line))))
-  ))
+    ))
+
+(defn read-csv-responses
+  [file-path]
+  (with-open [r (reader file-path)]
+    (loop [line (.readLine r)
+           result []]
+      (if (nil? line)
+        result
+        (recur (.readLine r) (conj result (csv-to-response line)))))
+    ))
