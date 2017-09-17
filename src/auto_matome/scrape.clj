@@ -77,27 +77,28 @@
       )
     )
 
-;; url filter by domain hayabusa3.2ch.sc
-(defn select-hayabusa-thread-urls
-  [urls]
-  ;; select threads which has a domain hayabusa3.2ch.sc in original url
-  (defn is-hayabusa-thread
-    [url]
-    (println url)
-      (let [re-hayabusa #".*hayabusa3\.2ch\.sc.*"
-            hayabusa-url (re-find-ex re-hayabusa url)]
-        (if (= nil hayabusa-url)
-          false
-          true
-          )
-        )
-      )
-  (let [ori-urls (map #(-> % get-html-resource get-original-thread-url) urls)]
-    (filter #(is-hayabusa-thread %) ori-urls)
-    )
-  )
 
-;; get each threds's urls from home url and number of pages
+(defn is-hayabusa-thread
+  [url]
+  (println url)
+  (let [re-hayabusa #".*hayabusa3\.2ch\.sc.*"
+        hayabusa-url (re-find-ex re-hayabusa url)]
+    (if (= nil hayabusa-url)
+      false
+      true
+      )
+    ))
+
+;
+;(defn select-hayabusa-thread-urls
+;  [urls]
+;      );
+;  (let [;ori-urls (map #(-> % get-html-resource get-original-thread-url) urls)]
+;    (filter #(is-hayabusa-thread %) ori-urls)
+;    )
+;  )
+
+;; get each matome threds's urls from home url and number of pages
 (defn get-thread-urls
   [home-url n]
   (defn get-thread-urls-loop
@@ -120,14 +121,6 @@
    (get-thread-urls-loop home-url n 1))
   )
 
-(defn test02
-  [url]
-  (let [
-        thread-urls (get-thread-urls url 1)
-        ;srcs (map #(get-html-resource %) thread-urls)
-        ]
-
-    (select-hayabusa-thread-urls thread-urls)
                                         ;   (get-original-thread-url src)
     ;(doall (map #(println %) thread-urls))
 ;   (map #(get-html-resource %) thread-urls)
@@ -138,8 +131,7 @@
    ;(get-html-resource "http://blog.livedoor.jp/dqnplus/archives/1938938.html")
     ;(doall (map #(get-matome-responses %) srcs))
 ;;    thread-urls
-    )
-  )
+
 
 ;(defn html->node
 ;  [cleaner html-src]

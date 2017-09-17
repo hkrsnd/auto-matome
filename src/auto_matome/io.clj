@@ -13,6 +13,14 @@
       ))
   )
 
+(defn write-strings-line
+  [strs file-path]
+  (with-open [w (writer file-path)]
+    (doseq [line strs]
+      (.write w (str/join [line "\n"]))
+      ))
+  )
+
 (defn write-words
   [strs file-path]
   (with-open [w (writer file-path)]

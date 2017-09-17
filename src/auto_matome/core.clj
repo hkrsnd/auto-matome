@@ -4,7 +4,8 @@
            (org.apache.lucene.analysis.ja JapaneseAnalyzer)
            (org.apache.lucene.analysis.ja.tokenattributes BaseFormAttribute InflectionAttribute PartOfSpeechAttribute ReadingAttribute)
            (org.apache.lucene.analysis.tokenattributes CharTermAttribute)
-           (org.apache.lucene.util Version))
+           (org.apache.lucene.util Version)
+           [org.htmlcleaner HtmlCleaner CompactXmlSerializer])
   (:use (incanter core stats charts io)
         [auto-matome.thread]
         [auto-matome.morpho])
@@ -19,22 +20,71 @@
 (def page-num 50)
 (def contents-resource "resource/contents.txt")
 (def contents-resource-base "resource/contents")
+(def original-urls-path "resource/original-urls.txt")
 (def dictionary-path "resource/dictionary.txt")
 
-(defn get-responses
+;(defn get-responses
+;  []
+;  (let [origin-urls (flatten (scr/select-hayabusa-thread-urls (scr/get-thread-urls home-url page-num)))]
+;    origin-urls
+;    (flatten
+;     (doall (map #(-> % scr/get-html-resource scro/get-responses) origin-urls)))
+;    ))
+;; pararell get-html-resource
+(defn par-get-html-resource
+  [urls]
+  (pmap #(-> % scr/get-html-resource) urls))
+;; get matome thread urls until page-num page
+(defn get-matome-thread-urls
   []
-  (let [origin-urls (flatten (scr/select-hayabusa-thread-urls (scr/get-thread-urls home-url page-num)))]
-    origin-urls
-    (flatten
-     (doall (map #(-> % scr/get-html-resource scro/get-responses) origin-urls)))
+  (scr/get-thread-urls home-url page-num)
+  )
+;; get original threads urls from matome-urls
+(defn get-original-thread-urls
+  [matome-urls]
+  (let [matome-thread-srcs (par-get-html-resource matome-urls)
+        original-thread-urls (pmap #(-> % (scr/get-original-thread-url)) matome-thread-srcs)
+        filterd (filter #(-> % scr/is-hayabusa-thread) original-thread-urls)]
+    filterd
+    )
+  )
+
+(defn get-responses-each-original-threads
+  [original-urls]
+  (let [original-srcs (par-get-html-resource original-urls)]
+    (pmap #(-> % scro/get-responses) original-srcs)
+    )
+  )
+
+(defn get-responses-each-matome-threads
+  [matome-urls]
+  (let [matome-srcs (par-get-html-resource matome-urls)]
+    (pmap #(-> % scr/get-matome-responses) matome-srcs)
+    )
+  )
+
+(defn record-original-urls
+  [original-urls]
+  (io/write-strings-line original-urls original-urls-path))
+
+(defn test01
+  []
+  (let [matome-thread-urls (get-matome-thread-urls)
+        original-thread-urls (get-original-thread-urls matome-thread-urls)]
+    (record-original-urls original-thread-urls)
     ))
 
+;(defn record-original-urls
+;  []
+;  (let [origin-urls (flatten (scr/select-hayabusa-thread-urls (scr/get-thread-urls home-url page-num)))]
+;    (io/write-strings origin-urls origin-urls-path)
+;  ))
 
-(defn get-responses-by-each-thread
-  []
-  (let [origin-urls (scr/select-hayabusa-thread-urls (scr/get-thread-urls home-url page-num))]
-    (doall (map #(-> % scr/get-html-resource scro/get-responses) origin-urls))
-    ))
+;(defn get-responses-by-each-thread
+;  []
+;  (let [origin-urls (scr/select-hayabusa-thread-urls (scr/get-thread-urls home-url page-num))]
+;    (doall (map #(-> % scr/get-html-resource scro/get-responses) origin-urls))
+;    ))
 
 (defn make-words-set-from-text
   [file-path]
@@ -69,72 +119,72 @@
 
 (defn -main
   [& args]
-  (get-responses))
+  (println "main"))
 
-(defn test01
-  []
-  (let [origin-url "http://hayabusa3.2ch.sc/test/read.cgi/news/1505522180/"
-        responses (-> origin-url scr/get-html-resource scro/get-responses)
-        contents (map #(-> % :content) responses)]
-    (io/write-strings contents contents-resource)
-    )
-  )
-
-(defn test02
-  []
-;  (doseq [x (io/read-contents "resource/contents.txt")]
-  (map #(-> % morphological-analysis-sentence) (io/read-contents "resource/contents.txt"))
-  )
-
-(defn test03
-  []
-  (let [responses (get-responses)
-        contents (map #(-> % :content) responses)]
-    (io/write-strings contents contents-resource)
-    ))
-
-(defn test04
-  []
-  (make-words-set-from-text contents-resource))
-
-(defn test05
-  []
-  (let [responses (get-responses)
-        contents (map #(-> % :content) responses)
-        buffer (io/write-strings contents contents-resource)
-        words (make-words-set-from-text contents-resource)]
-  (io/write-words words dictionary-path)
-  ))
-
-(defn test06
-  []
-  (let [;contents (io/read-contents contents-resource)
-        words (make-words-set-from-text contents-resource)]
-    (io/write-words words dictionary-path)
-    ))
-
-(defn test07
-  []
-  (let [words (make-words-set-from-text contents-resource)]
-    (from-set-to-dictionary words)
-    ))
-
-(defn test08
-  []
-  (let [responses-list (get-responses-by-each-thread)]
-    (loop [responses-list-tmp responses-list count 1]
-      (let [responses (first responses-list-tmp)]
-        (if (empty? responses)
-          (println "finished")
-          (let [contents (map #(-> % :content) responses)
-                contents-resource-path (str/join [contents-resource-base "_" count ".txt"])]
-            (io/write-strings contents contents-resource-path)
-            (recur (rest responses-list-tmp) (inc count))
-            )
-          ))
-      )
-    )
-  )
+;(defn test01
+;  []
+;  (let [origin-url "http://hayabusa3.2ch.sc/test/read.cgi/news/1505522180/"
+;        responses (-> origin-url scr/get-html-resource scro/get-responses)
+;        contents (map #(-> % :content) responses)]
+;    (io/write-strings contents contents-resource)
+;    )
+;  )
+;
+;(defn test02
+;  []
+;;  (doseq [x (io/read-contents "resource/contents.txt")]
+;  (map #(-> % morphological-analysis-sentence) (io/read-contents "resource/contents.txt"))
+;  )
+;
+;(defn test03
+;  []
+;  (let [responses (get-responses)
+;        contents (map #(-> % :content) responses)]
+;    (io/write-strings contents contents-resource)
+;    ))
+;
+;(defn test04
+;  []
+;  (make-words-set-from-text contents-resource))
+;
+;(defn test05
+;  []
+;  (let [responses (get-responses)
+;        contents (map #(-> % :content) responses)
+;        buffer (io/write-strings contents contents-resource)
+;        words (make-words-set-from-text contents-resource)]
+;  (io/write-words words dictionary-path)
+;  ))
+;
+;(defn test06
+;  []
+;  (let [;contents (io/read-contents contents-resource)
+;        words (make-words-set-from-text contents-resource)]
+;    (io/write-words words dictionary-path)
+;    ))
+;
+;(defn test07
+;  []
+;  (let [words (make-words-set-from-text contents-resource)]
+;    (from-set-to-dictionary words)
+;    ))
+;
+;(defn test08
+;  []
+;  (let [responses-list (get-responses-by-each-thread)]
+;    (loop [responses-list-tmp responses-list count 1]
+;      (let [responses (first responses-list-tmp)]
+;        (if (empty? responses)
+;          (println "finished")
+;          (let [contents (map #(-> % :content) responses)
+;                contents-resource-path (str/join [contents-resource-base "_" count ".txt"])]
+;            (io/write-strings contents contents-resource-path)
+;            (recur (rest responses-list-tmp) (inc count))
+;            )
+;          ))
+;      )
+;    )
+;  )
 ;  (println "===== Simple Pattern =====")
 ;  (doseq [t (morphological-analysis-sentence "黒い大きな瞳の男の娘")]
 ;    (println t))
