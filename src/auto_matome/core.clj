@@ -16,8 +16,9 @@
 (require '[auto-matome.io :as io])
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
-(def page-num 1)
+(def page-num 50)
 (def contents-resource "resource/contents.txt")
+(def contents-resource-base "resource/contents")
 (def dictionary-path "resource/dictionary.txt")
 
 (defn get-responses
@@ -26,8 +27,14 @@
     origin-urls
     (flatten
      (doall (map #(-> % scr/get-html-resource scro/get-responses) origin-urls)))
-    )
-  )
+    ))
+
+
+(defn get-responses-by-each-thread
+  []
+  (let [origin-urls (scr/select-hayabusa-thread-urls (scr/get-thread-urls home-url page-num))]
+    (doall (map #(-> % scr/get-html-resource scro/get-responses) origin-urls))
+    ))
 
 (defn make-words-set-from-text
   [file-path]
@@ -83,7 +90,7 @@
   []
   (let [responses (get-responses)
         contents (map #(-> % :content) responses)]
-    (io/write-strings contents)
+    (io/write-strings contents contents-resource)
     ))
 
 (defn test04
@@ -110,7 +117,24 @@
   []
   (let [words (make-words-set-from-text contents-resource)]
     (from-set-to-dictionary words)
-  ))
+    ))
+
+(defn test08
+  []
+  (let [responses-list (get-responses-by-each-thread)]
+    (loop [responses-list-tmp responses-list count 1]
+      (let [responses (first responses-list-tmp)]
+        (if (empty? responses)
+          (println "finished")
+          (let [contents (map #(-> % :content) responses)
+                contents-resource-path (str/join [contents-resource-base "_" count ".txt"])]
+            (io/write-strings contents contents-resource-path)
+            (recur (rest responses-list-tmp) (inc count))
+            )
+          ))
+      )
+    )
+  )
 ;  (println "===== Simple Pattern =====")
 ;  (doseq [t (morphological-analysis-sentence "黒い大きな瞳の男の娘")]
 ;    (println t))
