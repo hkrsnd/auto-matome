@@ -5,5 +5,5 @@
   [re str]
   (if (string? str)
     (re-find re str)
-    "")
+    nil)
   )

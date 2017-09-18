@@ -56,6 +56,23 @@
      :id id}
     ))
 
+(defn nth-arg
+  [i & args]
+  (nth args i)
+  )
+
+;(defn arg1 (partial nth-arg 1))
+;; >>999 => 999
+;; >>36 => 36
+(defn parse-target
+  [row-target]
+  (let [re-target #"(>>)([0-9]+)"
+        matched (re-find-ex re-target row-target)]
+    (if (nil? matched)
+      "nil"
+      (nth matched 2)
+      )))
+
 (defn get-matome-responses
   [matome-src]
     (let [num-name-date-ids (map #(:content %) (en/select matome-src [:.mainmore :.t_h]))
@@ -64,17 +81,22 @@
           date-id-strs (map #(-> % last :content first) num-name-date-ids )
           datetimes (map #(-> % parse-date-id :datetime) date-id-strs)
           ids (map #(-> % parse-date-id :id) date-id-strs)
-          contents (filter #(string? %)
-                           (map #(-> % :content first) (en/select matome-src [:.mainmore :.t_b])))
-        zipped (apply map list [nums ids datetimes contents])
+          ;contents (filter #(string? %)
+                                        ;                 (map #(-> % :content first) (en/select matome-src [:.mainmore :.t_b])))
+          contents (map #(-> % :content last) (en/select matome-src [:.mainmore :.t_b]))
+          targets (map #(-> % :content second :content first  parse-target) (en/select matome-src [:.mainmore :.t_b]))
+          zipped (apply map list [nums ids datetimes targets contents])
           ]
                                         ;    (println contents)
                                         ;    (println zipped)
+
+      (println targets)
       (map #(struct response
                     (nth % 0)
                     (nth % 1)
                     (nth % 2)
                     (nth % 3)
+                    (nth % 4)
                     ) zipped)
       
       )

@@ -17,11 +17,12 @@
 (require '[auto-matome.io :as io])
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
-(def page-num 3)
+(def page-num 1)
 (def contents-resource "resource/contents.txt")
 (def contents-resource-base "resource/contents")
 (def original-urls-path "resource/original-urls.txt")
 (def dictionary-path "resource/dictionary.txt")
+(def csv-num )
 
 ;(defn get-responses
 ;  []
@@ -125,9 +126,16 @@
   (let [original-urls (read-original-urls)
         original-responses-list (get-responses-each-original-threads original-urls)
         ]
+;    (println original-responses-list)
     (record-responses-list-to-indexed-file original-responses-list)
     )
   )
+
+(defn test04
+  []
+  (let [matome-src (scr/get-html-resource "http://blog.livedoor.jp/dqnplus/archives/1940167.html")]
+    (scr/get-matome-responses matome-src)
+    ))
 
 ;(defn record-original-urls
 ;  []
