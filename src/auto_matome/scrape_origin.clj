@@ -98,8 +98,6 @@
         date-times (join-dates-times dates times)
         zipped (apply map list [nums ids date-times targets contents])
         ]
-    (println targets)
-
     (map #(struct response
                   (nth % 0)
                   (nth % 1)

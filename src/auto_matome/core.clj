@@ -17,12 +17,13 @@
 (require '[auto-matome.io :as io])
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
-(def page-num 1)
+(def page-num 350)
 (def contents-resource "resource/contents.txt")
 (def contents-resource-base "resource/contents")
+(def original-thread-responses-base "resource/original-thread-")
 (def original-urls-path "resource/original-urls.txt")
 (def dictionary-path "resource/dictionary.txt")
-(def csv-num )
+(def original-thread-responses-csv-num 3073)
 
 ;(defn get-responses
 ;  []
@@ -86,11 +87,22 @@
             (let[index (first index-and-responses)
                  responses (second index-and-responses)
                  num-of-responses (count responses)
-                 record-path (str/join ["resource/original-thread-" index ".csv"])
+                 record-path (str/join [original-thread-responses-base index ".csv"])
                  ]
               (println record-path)
               (record-responses responses record-path)
               )) indexed-responses-list)
+    ))
+
+(defn read-all-response-csv
+  []
+  (let [rs (range 0 original-thread-responses-csv-num)]
+    (flatten
+     (pmap #(let [csv-path (str/join [original-thread-responses-base % ".csv"])]
+              (prn "reading..: ")
+              (println csv-path)
+              (io/read-csv-responses csv-path)
+              ) rs))
     )
   )
 

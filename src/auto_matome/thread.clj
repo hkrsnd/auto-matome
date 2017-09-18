@@ -14,13 +14,11 @@
   [csv-string]
   (let [sp (str/split csv-string #",")
         rest (subvec sp 4)
-        content (reduce #(str/join %) rest)]
+        content (str/join "," rest)]
     (struct response
             (nth sp 0)
             (nth sp 1)
             (nth sp 2)
             (nth sp 3)
             content
-            )
-    )
-  )
+            )))
