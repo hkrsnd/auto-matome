@@ -51,13 +51,14 @@
     ))
 
 (defn record-dictionary
-  [word-and-index-list file-path]
-  (let [dic-strs (map #(str/join [(first %) "," (second %)]) word-and-index-list)]
+  [word-index-maps file-path]
+  (let [dic-strs (map #(str/join [(:word %) "," (:index %)]) word-index-maps)]
     (write-strings-line dic-strs file-path)
     ))
 
 (defn read-dictionary
   [file-path]
-  (let [lines (read-contents file-path)]
-    (map #(str/split % #",") lines)
+  (let [lines (read-contents file-path)
+        word-index-list(map #(str/split % #",") lines)]
+    (map (fn [wi] {:word (first wi) :index (second wi)}) word-index-list)
   ))

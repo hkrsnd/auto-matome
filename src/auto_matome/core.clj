@@ -8,7 +8,8 @@
            [org.htmlcleaner HtmlCleaner CompactXmlSerializer])
   (:use (incanter core stats charts io)
         [auto-matome.thread]
-        [auto-matome.morpho])
+        [auto-matome.morpho]
+        [auto-matome.data])
   (:require [clojure.string :as str]))
 
 
@@ -128,29 +129,13 @@
   []
   (io/read-contents words-resource-path))
 
-(defn zipped-vector-to-map
-  [zipped-vec]
-  (loop [result {} tmp-zipped zipped-vec]
-    (let [zip (first tmp-zipped)]
-      (if (empty? zip)
-        result
-        (recur (assoc result (first zip) (second zip)) (rest tmp-zipped))))))
-
-(defn from-set-to-dictionary
-  [words-set]
-  (let [zipped (map-indexed #(vector %2 %1) words-set)]
-    (zipped-vector-to-map zipped)
-    ))
-
 (defn record-dictionary
-  [word-and-index-list]
-  (io/record-dictionary word-and-index-list dictionary-path))
+  [word-index-maps]
+  (io/record-dictionary word-index-maps dictionary-path))
 
 (defn read-dictionary
   []
-  (let [vector-dictionary (io/read-dictionary dictionary-path)]
-    (zipped-vector-to-map vector-dictionary)
-    ))
+  (io/read-dictionary dictionary-path))
 
 (defn test01
   []
