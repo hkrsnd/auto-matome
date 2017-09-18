@@ -1,6 +1,7 @@
 (ns auto-matome.data
   (:use [auto-matome.thread]
-        [auto-matome.morpho]))
+        [auto-matome.morpho]
+        [auto-matome.regex]))
 
 
 (defn zipped-vector-to-map
@@ -35,3 +36,19 @@
           (search-dictionary-by-word word dictionary)
           ) words))
 
+(defn response-to-vector
+  [response]
+  ;;todo
+  )
+
+(defn datetime-to-vector
+  [datetime]
+  (let [re-datetime #"([0-9]+)/([0-9]+)/([0-9]+)-([0-9]+):([0-9]+):([0-9]+)\.[0-9]+"
+        fined (re-find-ex re-datetime datetime)]
+    (rest fined)
+    )
+  )
+
+(defn id-to-vector
+  [id]
+  )
