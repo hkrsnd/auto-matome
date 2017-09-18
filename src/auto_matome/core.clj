@@ -21,7 +21,7 @@
 (def contents-resource "resource/contents.txt")
 (def all-contents-path "resource/all-contents.txt")
 (def contents-resource-base "resource/contents")
-(def original-thread-responses-base "resource/original-thread-")
+(def original-thread-responses-base "resource/original-responses/original-thread-")
 (def words-resource-path "resource/words.txt")
 (def original-urls-path "resource/original-urls.txt")
 (def dictionary-path "resource/dictionary.txt")
@@ -171,7 +171,7 @@
             (let[index (first index-and-responses)
                  responses (second index-and-responses)
                  num-of-responses (count responses)
-                 record-path (str/join ["resource/original-thread-" index ".csv"])
+                 record-path (str/join [original-thread-responses-base index ".csv"])
                  ]
               (println record-path)
               (record-responses responses record-path)
