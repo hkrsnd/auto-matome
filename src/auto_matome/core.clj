@@ -19,8 +19,10 @@
 (def home-url "http://blog.livedoor.jp/dqnplus/")
 (def page-num 350)
 (def contents-resource "resource/contents.txt")
+(def all-contents-path "resource/all-contents.txt")
 (def contents-resource-base "resource/contents")
 (def original-thread-responses-base "resource/original-thread-")
+(def words-resource-path "resource/words.txt")
 (def original-urls-path "resource/original-urls.txt")
 (def dictionary-path "resource/dictionary.txt")
 (def original-thread-responses-csv-num 3073)
@@ -39,8 +41,7 @@
 ;; get matome thread urls until page-num page
 (defn get-matome-thread-urls
   []
-  (scr/get-thread-urls home-url page-num)
-  )
+  (scr/get-thread-urls home-url page-num))
 ;; get original threads urls from matome-urls
 (defn get-original-thread-urls
   [matome-urls]
@@ -77,8 +78,13 @@
   [responses file-path]
   (let [res-strs (map #(response-to-string %) responses)]
     (io/write-strings res-strs file-path)
-    )
-  )
+    ))
+
+(defn record-contents
+  [responses file-path]
+  (let [contents (map #(:content %) responses)]
+    (io/write-strings-line contents file-path)
+    ))
 
 (defn record-responses-list-to-indexed-file
   [original-responses-list] ; this would be read from resource file
@@ -99,12 +105,52 @@
   (let [rs (range 0 original-thread-responses-csv-num)]
     (flatten
      (pmap #(let [csv-path (str/join [original-thread-responses-base % ".csv"])]
-              (prn "reading..: ")
-              (println csv-path)
+              (println (str/join ["reading: " csv-path]))
               (io/read-csv-responses csv-path)
               ) rs))
     )
   )
+
+(defn make-words-set-from-contents-resource
+  [file-path]
+  (let [contents (io/read-contents file-path)
+        analyzed (pmap #(-> % morphological-analysis-sentence) contents)
+        words-set (set (flatten (map (fn [x] (map (fn [y] (first y)) x)) analyzed)))]
+    words-set
+    ))
+
+(defn record-words
+  [words]
+  (io/write-strings-line words words-resource-path)
+  )
+
+(defn read-words
+  []
+  (io/read-contents words-resource-path))
+
+(defn zipped-vector-to-map
+  [zipped-vec]
+  (loop [result {} tmp-zipped zipped-vec]
+    (let [zip (first tmp-zipped)]
+      (if (empty? zip)
+        result
+        (recur (assoc result (first zip) (second zip)) (rest tmp-zipped))))))
+
+(defn from-set-to-dictionary
+  [words-set]
+  (let [zipped (map-indexed #(vector %2 %1) words-set)]
+    (zipped-vector-to-map zipped)
+    ))
+
+(defn record-dictionary
+  [word-and-index-list]
+  (io/record-dictionary word-and-index-list dictionary-path))
+
+(defn read-dictionary
+  []
+  (let [vector-dictionary (io/read-dictionary dictionary-path)]
+    (zipped-vector-to-map vector-dictionary)
+    ))
 
 (defn test01
   []
@@ -149,6 +195,25 @@
     (scr/get-matome-responses matome-src)
     ))
 
+(defn test05
+  []
+  (let [all-responses (read-all-response-csv)]
+    (record-contents all-responses all-contents-path)
+    ))
+
+(defn test06
+  []
+  (let [words (make-words-set-from-contents-resource all-contents-path)]
+    (record-words words)
+    ))
+
+(defn test07
+  []
+  (let [words (read-words)
+        dictionary (from-set-to-dictionary words)]
+    (record-dictionary dictionary)
+    ))
+
 ;(defn record-original-urls
 ;  []
 ;  (let [origin-urls (flatten (scr/select-hayabusa-thread-urls (scr/get-thread-urls home-url page-num)))]
@@ -161,22 +226,6 @@
 ;    (doall (map #(-> % scr/get-html-resource scro/get-responses) origin-urls))
 ;    ))
 
-(defn make-words-set-from-text
-  [file-path]
-  (let [contents (io/read-contents file-path)
-        analyzed (map #(-> % morphological-analysis-sentence) contents)
-        words-set (set (flatten (map (fn [x] (map (fn [y] (first y)) x)) analyzed)))]
-    words-set
-  ))
-
-(defn from-set-to-dictionary
-  [words-set]
-  (let [zipped (map-indexed #(vector %1 %2) words-set)]
-    (loop [result {} tmp-zipped zipped]
-      (let [zip (first tmp-zipped)]
-        (if (empty? zip)
-          result
-          (recur (assoc result (second zip) (first zip)) (rest tmp-zipped)))))))
 
 ;  (let [size (count words-set)
 ;        range (range 1 size)

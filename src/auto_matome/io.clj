@@ -49,3 +49,15 @@
         result
         (recur (.readLine r) (conj result (csv-to-response line)))))
     ))
+
+(defn record-dictionary
+  [word-and-index-list file-path]
+  (let [dic-strs (map #(str/join [(first %) "," (second %)]) word-and-index-list)]
+    (write-strings-line dic-strs file-path)
+    ))
+
+(defn read-dictionary
+  [file-path]
+  (let [lines (read-contents file-path)]
+    (map #(str/split % #",") lines)
+  ))
