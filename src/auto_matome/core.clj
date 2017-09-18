@@ -24,8 +24,10 @@
 (def contents-resource-base "resource/contents")
 (def original-thread-responses-base "resource/original-responses/original-thread-")
 (def words-resource-path "resource/words.txt")
+(def ids-resource-path "resource/ids.txt")
 (def original-urls-path "resource/original-urls.txt")
 (def dictionary-path "resource/dictionary.txt")
+(def id-dictionary-path "resource/id-dictionary.txt")
 (def original-thread-responses-csv-num 3073)
 
 ;(defn get-responses
@@ -137,6 +139,23 @@
   []
   (io/read-dictionary dictionary-path))
 
+(defn record-ids
+  [responses]
+  (let [ids (map #(:id %) responses)]
+    (io/write-strings-line ids ids-resource-path)))
+
+(defn read-ids
+  []
+  (io/read-contents ids-resource-path))
+
+(defn read-id-dictionary
+  []
+  (io/read-id-dictionary id-dictionary-path))
+
+(defn record-id-dictionary
+  [id-index-map]
+  (io/record-id-dictionary id-index-map id-dictionary-path))
+
 (defn test01
   []
   (let [matome-thread-urls (get-matome-thread-urls)
@@ -198,6 +217,22 @@
         dictionary (from-set-to-dictionary words)]
     (record-dictionary dictionary)
     ))
+
+;;record ids
+(defn test08
+  []
+  (let [responses (read-all-response-csv)]
+    (record-ids responses)
+    ))
+
+;; record id dictionary
+(defn test09
+  []
+  (let [ids (read-ids)
+        dictionary (from-set-to-id-dictionary ids)]
+    (record-id-dictionary dictionary)
+    )
+  )
 
 ;(defn record-original-urls
 ;  []

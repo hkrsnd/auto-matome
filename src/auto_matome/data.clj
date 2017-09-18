@@ -18,11 +18,23 @@
     (map #({:word (first %) :index (second %)}) zipped)
     ))
 
+(defn from-set-to-id-dictionary
+  [id-set]
+  (let [zipped (map-indexed #(vector %2 %1) id-set)]
+    (map (fn [z] {:id (first z) :index (second z)}) zipped)
+    ))
+
 (defn search-dictionary-by-word
   [word dictionary]
   (:index
    (first
     (filter #(= word (:word %)) dictionary))))
+
+(defn search-dictionary-by-id
+  [id dictionary]
+  (:index
+   (first
+    (filter #(= id (:id %)) dictionary))))
 
 (defn text-to-words
   [text]
@@ -30,7 +42,7 @@
     (map #(first %) analyzed)
     ))
 
-(defn words-to-num
+(defn words-to-vector
   [words dictionary]
   (map (fn [word]
           (search-dictionary-by-word word dictionary)
@@ -50,5 +62,6 @@
   )
 
 (defn id-to-vector
-  [id]
+  [id dictionary]
+  (search-dictionary-by-id id dictionary)
   )

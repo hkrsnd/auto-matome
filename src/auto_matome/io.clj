@@ -61,4 +61,17 @@
   (let [lines (read-contents file-path)
         word-index-list(map #(str/split % #",") lines)]
     (map (fn [wi] {:word (first wi) :index (second wi)}) word-index-list)
-  ))
+    ))
+
+(defn record-id-dictionary
+  [id-index-maps file-path]
+  (let [dic-strs (map #(str/join [(:id %) "," (:index %)]) id-index-maps)]
+    (write-strings-line dic-strs file-path)
+    ))
+
+(defn read-id-dictionary
+  [file-path]
+  (let [lines (read-contents file-path)
+        id-index-list(map #(str/split % #",") lines)]
+    (map (fn [ii] {:id (first ii) :index (second ii)}) id-index-list)
+    ))
