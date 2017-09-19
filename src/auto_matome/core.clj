@@ -156,6 +156,10 @@
   [id-index-map]
   (io/record-id-dictionary id-index-map id-dictionary-path))
 
+(defn to-responses-with-words
+  [responses]
+  (doall (pmap (fn [res] (to-response-with-words res)) responses)))
+
 (defn test01
   []
   (let [matome-thread-urls (get-matome-thread-urls)
@@ -239,8 +243,14 @@
   (let [responses (read-all-response-csv)
         dic (read-dictionary)
         id-dic (read-id-dictionary)]
-    (pmap #(response-to-vector % dic id-dic) responses)
+    (doall (pmap #(response-to-vector % dic id-dic) responses))
     ))
+
+(defn test11
+  []
+  (let [responses (read-all-response-csv)]
+    (to-responses-with-words responses))
+  )
 
 ;(defn record-original-urls
 ;  []

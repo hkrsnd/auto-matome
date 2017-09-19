@@ -15,7 +15,7 @@
 (defn from-set-to-dictionary
   [words-set]
   (let [zipped (map-indexed #(vector %2 %1) words-set)]
-    (map #({:word (first %) :index (second %)}) zipped)
+    (map (fn [z] {:word (first z) :index (second z)}) zipped)
     ))
 
 (defn from-set-to-id-dictionary
@@ -39,14 +39,14 @@
 (defn text-to-words
   [text]
   (let [analyzed (morphological-analysis-sentence text)]
-    (map #(first %) analyzed)
+    (doall (pmap #(first %) analyzed))
     ))
 
 (defn words-to-vector
   [words dictionary]
-  (map (fn [word]
+  (doall (pmap (fn [word]
           (search-dictionary-by-word word dictionary)
-          ) words))
+          ) words)))
 
 (defn num-to-vector
   [num]
@@ -88,6 +88,13 @@
         ]
     (print "ToVector: ")
     (println response)
-    (pmap #(parse-int %)
-         (flatten [num-vec id-vec datetime-vec target-vec content-vec])))
+    (doall
+     (pmap #(parse-int %)
+           (flatten [num-vec id-vec datetime-vec target-vec content-vec])))
+    )
+  )
+
+(defn to-response-with-words
+  [response]
+  (assoc response :content (text-to-words (:content response)))
   )
