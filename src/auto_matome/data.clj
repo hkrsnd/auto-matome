@@ -48,20 +48,46 @@
           (search-dictionary-by-word word dictionary)
           ) words))
 
-(defn response-to-vector
-  [response]
-  ;;todo
-  )
+(defn num-to-vector
+  [num]
+  [num])
 
 (defn datetime-to-vector
   [datetime]
   (let [re-datetime #"([0-9]+)/([0-9]+)/([0-9]+)-([0-9]+):([0-9]+):([0-9]+)\.[0-9]+"
         fined (re-find-ex re-datetime datetime)]
     (rest fined)
-    )
-  )
+    ))
 
 (defn id-to-vector
   [id dictionary]
-  (search-dictionary-by-id id dictionary)
+  [(search-dictionary-by-id id dictionary)])
+
+(defn target-to-vector
+  [target]
+  (if (= target "nil")
+    ["0"]
+    [target]
+    ))
+
+; "10"->10, "09"->9
+(defn parse-int [s]
+  (try
+    (Integer. (re-find  #"\d+" s ))
+    (catch Exception e 0)
+    ))
+
+(defn response-to-vector
+  [response dictionary id-dictionary]
+  ;;todo
+  (let [num-vec (num-to-vector (:num response))
+        id-vec (id-to-vector (:id response) id-dictionary)
+        datetime-vec (datetime-to-vector (:datetime response))
+        target-vec (target-to-vector (:target response))
+        content-vec (words-to-vector (text-to-words (:content response)) dictionary)
+        ]
+    (print "ToVector: ")
+    (println response)
+    (pmap #(parse-int %)
+         (flatten [num-vec id-vec datetime-vec target-vec content-vec])))
   )

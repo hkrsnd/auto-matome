@@ -107,10 +107,10 @@
   []
   (let [rs (range 0 original-thread-responses-csv-num)]
     (flatten
-     (pmap #(let [csv-path (str/join [original-thread-responses-base % ".csv"])]
+     (doall (pmap #(let [csv-path (str/join [original-thread-responses-base % ".csv"])]
               (println (str/join ["reading: " csv-path]))
               (io/read-csv-responses csv-path)
-              ) rs))
+              ) rs)))
     )
   )
 
@@ -233,6 +233,14 @@
     (record-id-dictionary dictionary)
     )
   )
+
+(defn test10
+  []
+  (let [responses (read-all-response-csv)
+        dic (read-dictionary)
+        id-dic (read-id-dictionary)]
+    (pmap #(response-to-vector % dic id-dic) responses)
+    ))
 
 ;(defn record-original-urls
 ;  []
