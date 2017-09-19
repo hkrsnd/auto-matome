@@ -1,4 +1,5 @@
 (ns auto-matome.data
+  (:require [clojure.string :as str])
   (:use [auto-matome.thread]
         [auto-matome.morpho]
         [auto-matome.regex]))
@@ -98,3 +99,14 @@
   [response]
   (assoc response :content (text-to-words (:content response)))
   )
+
+(defn response-with-words-to-csv-string
+  [res-ws]
+  (let [num (:num res-ws)
+        id (:id res-ws)
+        datetime (:datetime res-ws)
+        target (:target res-ws)
+        words (:content res-ws)
+        words-str (str/join ";" words)]
+    (str/join "," [num id datetime target words-str])
+    ))

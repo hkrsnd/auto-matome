@@ -24,6 +24,7 @@
 (def contents-resource-base "resource/contents")
 (def original-thread-responses-base "resource/original-responses/original-thread-")
 (def words-resource-path "resource/words.txt")
+(def responses-with-words-resource "resource/responses-with-words.csv")
 (def ids-resource-path "resource/ids.txt")
 (def original-urls-path "resource/original-urls.txt")
 (def dictionary-path "resource/dictionary.txt")
@@ -160,6 +161,13 @@
   [responses]
   (doall (pmap (fn [res] (to-response-with-words res)) responses)))
 
+(defn record-responses-with-words
+  [responses-with-words]
+  (let [res-strs (doall (pmap (fn [res] (response-with-words-to-csv-string res)) responses-with-words))]
+    (io/write-strings-line res-strs responses-with-words-resource)
+    )
+  )
+
 (defn test01
   []
   (let [matome-thread-urls (get-matome-thread-urls)
@@ -251,6 +259,12 @@
   (let [responses (read-all-response-csv)]
     (to-responses-with-words responses))
   )
+
+(defn test12
+  []
+  (let [responses (read-all-response-csv)
+        responses-with-words (to-responses-with-words responses)]
+    (record-responses-with-words responses-with-words)))
 
 ;(defn record-original-urls
 ;  []

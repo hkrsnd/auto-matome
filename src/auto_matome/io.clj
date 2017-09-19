@@ -22,13 +22,12 @@
       ))
   )
 
-(defn write-words
+(defn write-csv
   [strs file-path]
   (with-open [w (writer file-path)]
     (doseq [line strs]
       (.write w (str/join [line ","]))
-      ))
-  )
+      )))
 
 (defn read-contents
   [file-path]
