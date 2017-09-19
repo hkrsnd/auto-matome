@@ -128,3 +128,27 @@
     (str/join "," [num id datetime target words-str])
     ))
 
+(defn find-max-length
+  [vecs]
+  (loop [max-length 0 vecs-tmp vecs]
+        (if (empty? vecs-tmp)
+          max-length
+          (if (> (count (first vecs-tmp)) max-length)
+            (recur (count (first vecs-tmp)) (rest vecs-tmp))
+            (recur max-length (rest vecs-tmp))
+            ))
+        ))
+
+(defn padding-vectors
+  [vecs]
+  (let [max-length (find-max-length vecs)]
+    (pmap (fn [vec]
+            (let [length (count vec)
+                  diff (- max-length length)
+                  add-part (repeat diff 0)]
+              (concat vec add-part)
+              )
+            )
+          vecs)
+    )
+  )

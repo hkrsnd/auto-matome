@@ -271,7 +271,7 @@
 
 (defn test13
   []
-  (let [responses (read-all-response-csv)
+  (let [
         dic (read-dictionary)
         id-dic (read-id-dictionary)
         responses-with-words (read-responses-with-words)]

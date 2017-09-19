@@ -28,6 +28,16 @@
       (.write w (str/join [line ","]))
       )))
 
+(defn read-csv
+  [file-path]
+  (with-open [r (reader file-path)]
+    (loop [line (.readLine r)
+           result []]
+      (if (nil? line)
+        result
+        (recur (.readLine r) (conj (str/split line #",") line))))
+    )
+  )
 
 
 (defn read-contents
