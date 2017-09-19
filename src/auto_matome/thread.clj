@@ -22,3 +22,15 @@
             (nth sp 3)
             content
             )))
+
+(defn csv-to-response-with-words
+  [csv-string]
+  (let [sp (str/split csv-string #",")
+        words (str/split (last sp) #";")]
+    (struct response
+            (nth sp 0)
+            (nth sp 1)
+            (nth sp 2)
+            (nth sp 3)
+            words
+            )))

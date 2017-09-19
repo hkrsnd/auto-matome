@@ -19,8 +19,7 @@
   (with-open [w (writer file-path)]
     (doseq [line strs]
       (.write w (str/join [line "\n"]))
-      ))
-  )
+      )))
 
 (defn write-csv
   [strs file-path]
@@ -28,6 +27,8 @@
     (doseq [line strs]
       (.write w (str/join [line ","]))
       )))
+
+
 
 (defn read-contents
   [file-path]
@@ -73,4 +74,14 @@
   (let [lines (read-contents file-path)
         id-index-list(map #(str/split % #",") lines)]
     (map (fn [ii] {:id (first ii) :index (second ii)}) id-index-list)
+    ))
+
+(defn read-responses-with-words
+  [file-path]
+  (with-open [r (reader file-path)]
+    (loop [line (.readLine r)
+           result []]
+      (if (nil? line)
+        result
+        (recur (.readLine r) (conj result (csv-to-response-with-words line)))))
     ))

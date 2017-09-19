@@ -95,6 +95,23 @@
     )
   )
 
+(defn response-with-words-to-vector
+  [response dictionary id-dictionary]
+  ;;todo
+  (let [num-vec (num-to-vector (:num response))
+        id-vec (id-to-vector (:id response) id-dictionary)
+        datetime-vec (datetime-to-vector (:datetime response))
+        target-vec (target-to-vector (:target response))
+        content-vec (words-to-vector  (:content response) dictionary)
+        ]
+    (print "ToVector: ")
+    (println response)
+    (doall
+     (pmap #(parse-int %)
+           (flatten [num-vec id-vec datetime-vec target-vec content-vec])))
+    )
+  )
+
 (defn to-response-with-words
   [response]
   (assoc response :content (text-to-words (:content response)))
@@ -110,3 +127,4 @@
         words-str (str/join ";" words)]
     (str/join "," [num id datetime target words-str])
     ))
+

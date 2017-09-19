@@ -165,8 +165,11 @@
   [responses-with-words]
   (let [res-strs (doall (pmap (fn [res] (response-with-words-to-csv-string res)) responses-with-words))]
     (io/write-strings-line res-strs responses-with-words-resource)
-    )
-  )
+    ))
+
+(defn read-responses-with-words
+  []
+  (io/read-responses-with-words responses-with-words-resource))
 
 (defn test01
   []
@@ -265,6 +268,15 @@
   (let [responses (read-all-response-csv)
         responses-with-words (to-responses-with-words responses)]
     (record-responses-with-words responses-with-words)))
+
+(defn test13
+  []
+  (let [responses (read-all-response-csv)
+        dic (read-dictionary)
+        id-dic (read-id-dictionary)
+        responses-with-words (read-responses-with-words)]
+    (doall (pmap #(response-with-words-to-vector % dic id-dic) responses-with-words))
+    ))
 
 ;(defn record-original-urls
 ;  []
