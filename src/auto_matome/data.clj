@@ -128,6 +128,12 @@
     (str/join "," [num id datetime target words-str])
     ))
 
+(defn vector-to-csv-string
+  [vec]
+  (let [str-vec (doall (pmap #(str %) vec))]
+    (str/join "," str-vec)
+  ))
+
 (defn find-max-length
   [vecs]
   (loop [max-length 0 vecs-tmp vecs]
