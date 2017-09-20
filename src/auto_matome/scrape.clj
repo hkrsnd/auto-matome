@@ -4,27 +4,18 @@
             [clojure.string :as str]
             [pjstadig.utf8 :as utf8]
             [clj-xpath.core :as xpath]
-            [net.cgrand.enlive-html :as en]
-            )
-                                        ;[pl.danieljanus.tagsoup :as soup]
-                                        ;[clojure.contrib.zip-filter :as z]
-                                        ;[reaver]
-                                        ;[clojure.zip-filter :as z]
-                                        ;[clojure.zip-filter.xml :as zf]
+            [net.cgrand.enlive-html :as en])
   (:use [clojure.data.zip.xml]
         [clojure.java.io]
         [auto-matome.thread]
-        [auto-matome.regex]
-        )
+        [auto-matome.regex])
   (:import [org.htmlcleaner HtmlCleaner CompactXmlSerializer]))
-
 
 (defn get-html-resource
   [url]
   (try
     (en/html-resource (reader url :encoding "JISAutoDetect"))
-    (catch Exception e nil)
-    ))
+    (catch Exception e nil)))
 
 (defn get-original-thread-url
   [html-src]
@@ -34,14 +25,12 @@
                    (first
                     (en/select html-src
                                [:.mainmore :.aa :span]))))]
-      (re-find-ex re moto-url))
-    )
+      (re-find-ex re moto-url)))
 
 (defn parse-response-num
   [str-num] ; "n: "
   (let [re #"\d+"]
-      (re-find-ex re str-num)
-      ))
+      (re-find-ex re str-num)))
 
 (defn parse-date-id
   [date-id-str] ; " 2017/09/04(月) 08:58:42.97 ID:8AaMbvih0"
@@ -52,14 +41,11 @@
         time (re-find-ex re-time date-id-str)
         id (last (re-find-ex re-id date-id-str))
         ]
-    {:datetime (str/join [date "-" time])
-     :id id}
-    ))
+    {:datetime (str/join [date "-" time]) :id id}))
 
 (defn nth-arg
   [i & args]
-  (nth args i)
-  )
+  (nth args i))
 
 ;(defn arg1 (partial nth-arg 1))
 ;; >>999 => 999
@@ -70,8 +56,16 @@
         matched (re-find-ex re-target row-target)]
     (if (nil? matched)
       "nil"
-      (nth matched 2)
-      )))
+      (nth matched 2))))
+
+(defn parse-response
+  [row-res]
+  (let [ls (:content row-res)
+        strs (filter #(and (string? %) (not= " " %)) ls)
+        joined-tmp (str/join strs)
+        joined (str/join [joined-tmp "\n"])]
+                                        ;    (str/join (map #(-> % (filter string?) (str/join "\n"))))
+    joined))
 
 (defn get-matome-responses
   [matome-src]
@@ -83,25 +77,18 @@
           ids (map #(-> % parse-date-id :id) date-id-strs)
           ;contents (filter #(string? %)
                                         ;                 (map #(-> % :content first) (en/select matome-src [:.mainmore :.t_b])))
-          contents (map #(-> % :content last) (en/select matome-src [:.mainmore :.t_b]))
+          contents (map #(-> % parse-response) (en/select matome-src [:.mainmore :.t_b]))
           targets (map #(-> % :content second :content first  parse-target) (en/select matome-src [:.mainmore :.t_b]))
           zipped (apply map list [nums ids datetimes targets contents])
           ]
-                                        ;    (println contents)
-                                        ;    (println zipped)
-
-      (println targets)
+      (println contents)
       (map #(struct response
                     (nth % 0)
                     (nth % 1)
                     (nth % 2)
                     (nth % 3)
                     (nth % 4)
-                    ) zipped)
-      
-      )
-    )
-
+                    ) zipped)))
 
 (defn is-hayabusa-thread
   [url]
@@ -111,8 +98,7 @@
     (if (= nil hayabusa-url)
       false
       true
-      )
-    ))
+      )))
 
 ;
 ;(defn select-hayabusa-thread-urls

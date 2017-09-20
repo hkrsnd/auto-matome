@@ -18,11 +18,12 @@
 (require '[auto-matome.io :as io])
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
-(def page-num 350)
+(def page-num 1)
 (def contents-resource "resource/contents.txt")
 (def all-contents-path "resource/all-contents.txt")
 (def contents-resource-base "resource/contents")
 (def original-thread-responses-base "resource/original-responses/original-thread-")
+(def matome-thread-responses-base "resource/matome-responses/matome-thread-")
 (def words-resource-path "resource/words.txt")
 (def responses-with-words-resource "resource/responses-with-words.csv")
 (def ids-resource-path "resource/ids.txt")
@@ -42,7 +43,7 @@
 ;; pararell get-html-resource
 (defn par-get-html-resource
   [urls]
-  (pmap #(-> % scr/get-html-resource) urls))
+  (doall (pmap #(-> % scr/get-html-resource) urls)))
 ;; get matome thread urls until page-num page
 (defn get-matome-thread-urls
   []
@@ -51,11 +52,19 @@
 (defn get-original-thread-urls
   [matome-urls]
   (let [matome-thread-srcs (par-get-html-resource matome-urls)
-        original-thread-urls (pmap #(-> % (scr/get-original-thread-url)) matome-thread-srcs)
+        original-thread-urls (doall (pmap #(-> % (scr/get-original-thread-url)) matome-thread-srcs))
         filterd (filter #(-> % scr/is-hayabusa-thread) original-thread-urls)]
     filterd
-    )
-  )
+    ))
+;; returns pair [original-url, matome-url]
+(defn get-original-and-matome-thread-urls
+  [matome-urls]
+  (let [matome-thread-srcs (par-get-html-resource matome-urls)
+        original-thread-urls (doall (pmap #(-> % (scr/get-original-thread-url)) matome-thread-srcs))
+        original-and-matome-urls (zipmap original-thread-urls matome-urls)
+        filterd (filter #(-> % first scr/is-hayabusa-thread) original-and-matome-urls)]
+    filterd
+    ))
 
 (defn get-responses-each-original-threads
   [original-urls]
@@ -91,15 +100,20 @@
     (io/write-strings-line contents file-path)
     ))
 
+;; option should be 'original or 'matome
 (defn record-responses-list-to-indexed-file
-  [original-responses-list] ; this would be read from resource file
-  (let [indexed-responses-list (map-indexed #(vector %1 %2) original-responses-list)]
+  [responses-list option] ; this would be read from resource file
+  (let [indexed-responses-list (map-indexed #(vector %1 %2) responses-list)]
     (pmap (fn [index-and-responses]
             (let[index (first index-and-responses)
                  responses (second index-and-responses)
                  num-of-responses (count responses)
-                 record-path (str/join [original-thread-responses-base index ".csv"])
-                 ]
+                 base-path (if (= option 'original)
+                             original-thread-responses-base
+                             (if (= option 'matome)
+                               matome-thread-responses-base
+                               (throw (Exception. "Invalid option: fn record-responses-list-to-indexed-file"))))
+                 record-path (str/join [base-path index ".csv"])]
               (println record-path)
               (record-responses responses record-path)
               )) indexed-responses-list)
@@ -184,6 +198,13 @@
     (record-original-urls original-thread-urls)
     ))
 
+(defn test011
+  []
+  (let [matome-thread-urls (get-matome-thread-urls)
+        original-and-matome-urls (get-original-and-matome-thread-urls matome-thread-urls)]
+    original-and-matome-urls))
+        
+
 (defn test02
   []
   (let [original-urls (read-original-urls)
@@ -210,7 +231,7 @@
         original-responses-list (get-responses-each-original-threads original-urls)
         ]
 ;    (println original-responses-list)
-    (record-responses-list-to-indexed-file original-responses-list)
+    (record-responses-list-to-indexed-file original-responses-list 'original)
     )
   )
 
@@ -292,6 +313,14 @@
         vecs (doall (pmap #(response-with-words-to-vector % dic id-dic) responses-with-words))
         padded (padding-vectors vecs)]
     (record-vectors padded)
+    ))
+
+(defn test15
+  []
+  (let [matome-urls (get-matome-thread-urls)
+        matome-responses (get-responses-each-matome-threads matome-urls)]
+    (doall (map #(println %) matome-urls))
+    (record-responses-list-to-indexed-file matome-responses 'matome)
     ))
 
 ;(defn record-original-urls

@@ -16,14 +16,12 @@
 (defn from-set-to-dictionary
   [words-set]
   (let [zipped (map-indexed #(vector %2 %1) words-set)]
-    (map (fn [z] {:word (first z) :index (second z)}) zipped)
-    ))
+    (map (fn [z] {:word (first z) :index (second z)}) zipped)))
 
 (defn from-set-to-id-dictionary
   [id-set]
   (let [zipped (map-indexed #(vector %2 %1) id-set)]
-    (map (fn [z] {:id (first z) :index (second z)}) zipped)
-    ))
+    (map (fn [z] {:id (first z) :index (second z)}) zipped)))
 
 (defn search-dictionary-by-word
   [word dictionary]
@@ -40,14 +38,12 @@
 (defn text-to-words
   [text]
   (let [analyzed (morphological-analysis-sentence text)]
-    (doall (pmap #(first %) analyzed))
-    ))
+    (doall (pmap #(first %) analyzed))))
 
 (defn words-to-vector
   [words dictionary]
   (doall (pmap (fn [word]
-          (search-dictionary-by-word word dictionary)
-          ) words)))
+          (search-dictionary-by-word word dictionary)) words)))
 
 (defn num-to-vector
   [num]
@@ -57,8 +53,7 @@
   [datetime]
   (let [re-datetime #"([0-9]+)/([0-9]+)/([0-9]+)-([0-9]+):([0-9]+):([0-9]+)\.[0-9]+"
         fined (re-find-ex re-datetime datetime)]
-    (rest fined)
-    ))
+    (rest fined)))
 
 (defn id-to-vector
   [id dictionary]
@@ -68,15 +63,13 @@
   [target]
   (if (= target "nil")
     ["0"]
-    [target]
-    ))
+    [target]))
 
 ; "10"->10, "09"->9
 (defn parse-int [s]
   (try
     (Integer. (re-find  #"\d+" s ))
-    (catch Exception e 0)
-    ))
+    (catch Exception e 0)))
 
 (defn response-to-vector
   [response dictionary id-dictionary]
@@ -85,15 +78,12 @@
         id-vec (id-to-vector (:id response) id-dictionary)
         datetime-vec (datetime-to-vector (:datetime response))
         target-vec (target-to-vector (:target response))
-        content-vec (words-to-vector (text-to-words (:content response)) dictionary)
-        ]
+        content-vec (words-to-vector (text-to-words (:content response)) dictionary)]
     (print "ToVector: ")
     (println response)
     (doall
      (pmap #(parse-int %)
-           (flatten [num-vec id-vec datetime-vec target-vec content-vec])))
-    )
-  )
+           (flatten [num-vec id-vec datetime-vec target-vec content-vec])))))
 
 (defn response-with-words-to-vector
   [response dictionary id-dictionary]
@@ -108,14 +98,11 @@
     (println response)
     (doall
      (pmap #(parse-int %)
-           (flatten [num-vec id-vec datetime-vec target-vec content-vec])))
-    )
-  )
+           (flatten [num-vec id-vec datetime-vec target-vec content-vec])))))
 
 (defn to-response-with-words
   [response]
-  (assoc response :content (text-to-words (:content response)))
-  )
+  (assoc response :content (text-to-words (:content response))))
 
 (defn response-with-words-to-csv-string
   [res-ws]
@@ -125,14 +112,12 @@
         target (:target res-ws)
         words (:content res-ws)
         words-str (str/join ";" words)]
-    (str/join "," [num id datetime target words-str])
-    ))
+    (str/join "," [num id datetime target words-str])))
 
 (defn vector-to-csv-string
   [vec]
   (let [str-vec (doall (pmap #(str %) vec))]
-    (str/join "," str-vec)
-  ))
+    (str/join "," str-vec)))
 
 (defn find-max-length
   [vecs]
@@ -141,9 +126,7 @@
           max-length
           (if (> (count (first vecs-tmp)) max-length)
             (recur (count (first vecs-tmp)) (rest vecs-tmp))
-            (recur max-length (rest vecs-tmp))
-            ))
-        ))
+            (recur max-length (rest vecs-tmp))))))
 
 (defn padding-vectors
   [vecs]
@@ -152,9 +135,16 @@
             (let [length (count vec)
                   diff (- max-length length)
                   add-part (repeat diff 0)]
-              (concat vec add-part)
-              )
-            )
-          vecs)
-    )
-  )
+              (concat vec add-part)))
+          vecs)))
+
+(defn selected?
+  [original-response matome-responses]
+  (or (pmap (fn [matome-response] (= (:num original-response) (:num matome-response)))
+            matome-responses)))
+
+(defn generate-response-labels
+  [original-responses matome-responses]
+  (doall (pmap (fn [o-res] (if (selected? o-res matome-responses)
+                             1
+                             0)) original-responses)))
