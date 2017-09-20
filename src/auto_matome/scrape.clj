@@ -97,8 +97,7 @@
         hayabusa-url (re-find-ex re-hayabusa url)]
     (if (= nil hayabusa-url)
       false
-      true
-      )))
+      true)))
 
 ;
 ;(defn select-hayabusa-thread-urls

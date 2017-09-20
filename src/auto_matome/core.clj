@@ -100,24 +100,20 @@
     (io/write-strings-line contents file-path)
     ))
 
-;; option should be 'original or 'matome
-(defn record-responses-list-to-indexed-file
-  [responses-list option] ; this would be read from resource file
-  (let [indexed-responses-list (map-indexed #(vector %1 %2) responses-list)]
-    (pmap (fn [index-and-responses]
-            (let[index (first index-and-responses)
-                 responses (second index-and-responses)
-                 num-of-responses (count responses)
-                 base-path (if (= option 'original)
-                             original-thread-responses-base
-                             (if (= option 'matome)
-                               matome-thread-responses-base
-                               (throw (Exception. "Invalid option: fn record-responses-list-to-indexed-file"))))
-                 record-path (str/join [base-path index ".csv"])]
-              (println record-path)
-              (record-responses responses record-path)
-              )) indexed-responses-list)
-    ))
+(defn record-original-and-matome-responses-list-to-indexed-file
+  [original-responses-list matome-responses-list] ; this would be read from resource file
+  (let [paired-responses-list (zipmap original-responses-list matome-responses-list)
+        indexed-paired-responses-list (map-indexed #(vector %1 %2) paired-responses-list)]
+    (doall (pmap (fn [index-and-paired-responses]
+            (let [index (first index-and-paired-responses)
+                  paired-responses (second index-and-paired-responses)
+                  original-responses (first paired-responses)
+                  matome-responses (second paired-responses)
+                  original-record-path (str/join [original-thread-responses-base index ".csv"])
+                  matome-record-path (str/join [matome-thread-responses-base index ".csv"])]
+              (record-responses original-responses original-record-path)
+              (record-responses matome-responses matome-record-path)              
+              )) indexed-paired-responses-list))))
 
 (defn read-all-response-csv
   []
@@ -205,35 +201,33 @@
     original-and-matome-urls))
         
 
-(defn test02
-  []
-  (let [original-urls (read-original-urls)
-        original-responses-list (get-responses-each-original-threads original-urls)
-        ;indexes (range 1 (count original-responses-list))
-        indexed-responses-list (map-indexed #(vector %1 %2) original-responses-list)
-        ;record-path (map #(str/join ["original-thread-" (str/str (first %))]) indexed-responses)
-        ]
-    (pmap (fn [index-and-responses]
-            (let[index (first index-and-responses)
-                 responses (second index-and-responses)
-                 num-of-responses (count responses)
-                 record-path (str/join [original-thread-responses-base index ".csv"])
-                 ]
-              (println record-path)
-              (record-responses responses record-path)
-              )) indexed-responses-list)
-    )
-  )
+;(defn test02
+;  []
+;  (let [original-urls (read-original-urls)
+;        original-responses-list (get-responses-each-original-threads original-urls)
+;        ;indexes (range 1 (count original-responses-list))
+;        indexed-responses-list (map-indexed #(vector %1 %2) original-responses-list)
+;        ;record-path (map #(str/join ["original-thread-" (str/str (first %))]) indexed-responses)
+;        ]
+;    (pmap (fn [index-and-responses]
+;            (let[index (first index-and-responses)
+;                 responses (second index-and-responses)
+;                 num-of-responses (count responses)
+;                 record-path (str/join [original-thread-responses-base index ".csv"])
+;                 ]
+;              (println record-path)
+;              (record-responses responses record-path)
+;              )) indexed-responses-list)
+;    )
+;  )
 
-(defn test03
-  []
-  (let [original-urls (read-original-urls)
-        original-responses-list (get-responses-each-original-threads original-urls)
-        ]
-;    (println original-responses-list)
-    (record-responses-list-to-indexed-file original-responses-list 'original)
-    )
-  )
+;(defn test03
+;  []
+;  (let [original-urls (read-original-urls)
+;        original-responses-list (get-responses-each-original-threads original-urls)
+;        ]
+;;    (println original-responses-list)
+;    (record-responses-list-to-indexed-file original-responses-list 'original)))
 
 (defn test04
   []
@@ -315,13 +309,24 @@
     (record-vectors padded)
     ))
 
-(defn test15
+;(defn test15
+;  []
+;  (let [matome-urls (get-matome-thread-urls)
+;        matome-responses (get-responses-each-matome-threads matome-urls)]
+;    (doall (map #(println %) matome-urls))
+;    (record-responses-list-to-indexed-file matome-responses 'matome)
+;    ))
+;
+(defn test16
   []
   (let [matome-urls (get-matome-thread-urls)
-        matome-responses (get-responses-each-matome-threads matome-urls)]
-    (doall (map #(println %) matome-urls))
-    (record-responses-list-to-indexed-file matome-responses 'matome)
-    ))
+        original-and-matome-urls (get-original-and-matome-thread-urls matome-urls)
+        original-urls (map #(first %) original-and-matome-urls)
+        matome-urls (map #(second %) original-and-matome-urls)
+        original-responses-list (get-responses-each-matome-threads original-urls)
+        matome-responses-list (get-responses-each-matome-threads matome-urls)]
+    (record-original-and-matome-responses-list-to-indexed-file original-responses-list matome-responses-list)
+        ))
 
 ;(defn record-original-urls
 ;  []
