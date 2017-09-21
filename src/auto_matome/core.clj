@@ -18,7 +18,7 @@
 (require '[auto-matome.io :as io])
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
-(def page-num 1)
+(def page-num 10)
 (def contents-resource "resource/contents.txt")
 (def all-contents-path "resource/all-contents.txt")
 (def contents-resource-base "resource/contents")
@@ -69,7 +69,7 @@
 (defn get-responses-each-original-threads
   [original-urls]
   (let [original-srcs (par-get-html-resource original-urls)]
-    (pmap #(-> % scro/get-responses) original-srcs)
+    (doall (map #(-> % scro/get-original-responses) original-srcs))
     )
   )
 
@@ -321,12 +321,24 @@
   []
   (let [matome-urls (get-matome-thread-urls)
         original-and-matome-urls (get-original-and-matome-thread-urls matome-urls)
+       ; original-and-matome-urls [["http://hayabusa3.2ch.sc/test/read.cgi/news/1505689369/"]["http://blog.livedoor.jp/dqnplus/archives/1940297.html"]]
         original-urls (map #(first %) original-and-matome-urls)
         matome-urls (map #(second %) original-and-matome-urls)
-        original-responses-list (get-responses-each-matome-threads original-urls)
+        original-responses-list (get-responses-each-original-threads original-urls)
         matome-responses-list (get-responses-each-matome-threads matome-urls)]
+;    (println matome-urls)
+;    (println original-urls)
+;    (println (first original-responses-list))
+    ;(println (first matome-responses-list))
     (record-original-and-matome-responses-list-to-indexed-file original-responses-list matome-responses-list)
-        ))
+    ))
+
+(defn test17
+  []
+;  (get-responses-each-matome-threads ["http://blog.livedoor.jp/dqnplus/archives/1940297.html"])
+  (get-responses-each-original-threads ["http://hayabusa3.2ch.sc/test/read.cgi/news/1505689369/"])
+
+  )
 
 ;(defn record-original-urls
 ;  []

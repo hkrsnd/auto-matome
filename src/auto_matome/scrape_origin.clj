@@ -19,27 +19,17 @@
   [url]
   (scr/get-html-resource url))
 
-(defn parse-response
-  [row-res]
-  (let [ls (:content row-res)
-        strs (filter #(and (string? %) (not= " " %)) ls)
-        joined (str/join strs)]
-                                        ;    (str/join (map #(-> % (filter string?) (str/join "\n"))))
-    joined
-    )
-  )
-
 ;; .net ありなしの場合がある
-(defn parse-ids
-  [strids]
-  (let [re-id #"(.+)(.net)"
-        re-net-removed #""]
-    (map #(if (= nil (re-find-ex re-id %))
-            %
-            (second (re-find-ex re-id %))
-            ) strids)
-    )
-  )
+;(defn parse-ids
+;  [strids]
+;  (let [re-id #"(.+)(.net)"
+;        re-net-removed #""]
+;    (map #(if (= nil (re-find-ex re-id %))
+;            %
+;            (second (re-find-ex re-id %))
+;            ) strids)
+;    )
+;  )
 ;; >>999 => 999
 (defn parse-target
   [row-target]
@@ -51,11 +41,6 @@
     )
   )
 
-(defn join-dates-times
-  [dates times]
-  (let [zipped (apply map list [dates times])]
-    (map #(str/join [(first %) "-" (second %)]) zipped)
-    ))
 
 (defn drop-nth
   [n coll]
@@ -64,38 +49,78 @@
        (remove #(zero? (mod (first %) n)))
        (map second)))
 
+(defn nth-arg [i & args]
+  (nth args i))
+
 (defn get-target-part
   [ls]
   (let [ls-tmp (map #(-> % :content first) ls)
         filtered (first (filter #(not (nil? %)) ls-tmp))]
     filtered
-  ))
+    ))
 
-;; get a list of struct response corresponds to reponses in original thread
-(defn get-responses
+(defn parse-num
+  [up-line]
+  (re-find-ex #"\d+" (first up-line)))
+
+(defn join-dates-times
+  [dates times]
+  (let [zipped (apply map list [dates times])]
+    (map #(str/join [(first %) "-" (second %)]) zipped)
+    ))
+
+(defn join-date-time
+  [date time]
+  (if (or (nil? date)  (nil? time))
+    nil
+    (str/join [date "-" time])))
+
+(defn parse-datetime
+  [date-id-string]
+  (let [date (re-find-ex #"\d+\/\d+\/\d+" date-id-string)
+        time (re-find-ex #"\d+:\d+:\d+\.\d+" date-id-string)]
+        (join-date-time date time)))
+
+(defn parse-id
+  [date-id-string]
+  (second (re-find-ex #"ID:(.+)" date-id-string)))
+
+(defn parse-target
+  [down-block]
+  (let [target (-> down-block second :content first)]
+    (second (re-find-ex #">>(\d+)" target))
+    )
+  )
+
+(defn parse-response
+  [row-res]
+  (let [ls (:content row-res)
+        strs (filter #(and (string? %) (not= " " %)) ls)
+        joined (str/join strs)]
+                                        ;    (str/join (map #(-> % (filter string?) (str/join "\n"))))
+    joined
+    )
+  )
+(defn parse-contents
+  [down-block]
+  (let [strings (filter string? down-block)
+        string (str/join  strings)]
+    string))
+
+  
+(defn get-original-responses
   [src]
-  (let [contents (map #(parse-response %) (en/select src [:html :body :dl :dd]))
-        targets (map #(-> % :content get-target-part parse-target) (en/select src[:html :body :dl :dd]))
-        dts (drop-nth 4 (filter #(string? %) (en/select src [:html :body :dl :dt text])))
-        re-num #"(\d+)(\s：)"
-        re-id #"(ID:)(.+)"
-        re-date #"\d+\/\d+\/\d+"
-        re-time #"\d+:\d+:\d+\.\d+"
-        re-name #"(ID)()"
-        nums (filter #(not= % nil) (map 
-                                    #(second (re-find-ex re-num %))
-                                    dts))
-        ;; TODO
-        ids (parse-ids (filter #(not= % nil) (map 
-                                              #(nth (re-find-ex re-id %) 2)
-                                              dts)))
-        dates (filter #(not= % nil) (map 
-                                     #(re-find-ex re-date %)
-                                     dts))
-        times (filter #(not= % nil) (map 
-                                     #(re-find-ex re-time %)
-                                     dts))
-        date-times (join-dates-times dates times)
+  (let [
+        ;(94 ： {:tag :font, :attrs {:color green}, :content ({:tag :b, :attrs nil, :content (名無しさん＠涙目です。)})} ：2017/09/18(月) 08:29:33.50 ID:D9FF6Umo0.net)
+        up-lines (doall (map #(-> % :content) (en/select src [:html :body :dl :dt])))
+        down-blocks (doall (map #(-> % :content) (en/select src [:html :body :dl :dd])))
+        nums (doall (map #(parse-num %) up-lines))
+        ;"：2017/09/18(月) 08:03:17.41 ID:9+6bHTs50.net"
+        date-id-strings (doall (map #(nth % 2) up-lines))
+        date-times (doall (map #(parse-datetime %) date-id-strings))
+        ids (map #(parse-id %) date-id-strings)
+        targets (flatten (map #(parse-target %) down-blocks))
+        contents  (doall (map (fn[b] (parse-contents b)) down-blocks))
         zipped (apply map list [nums ids date-times targets contents])
         ]
     (map #(struct response
@@ -108,10 +133,3 @@
     )
   )
 
-(defn test01
-  [url]
-  (let [src (get-html-resource url)
-        contents (get-responses src)]
-    contents
-    )
-  )

@@ -81,7 +81,6 @@
           targets (map #(-> % :content second :content first  parse-target) (en/select matome-src [:.mainmore :.t_b]))
           zipped (apply map list [nums ids datetimes targets contents])
           ]
-      (println contents)
       (map #(struct response
                     (nth % 0)
                     (nth % 1)
