@@ -13,6 +13,15 @@
                  [enlive "1.1.5"]
                  [reaver "0.1.2"]
                  [org.clojure/data.zip "0.1.2"]
+                 [org.clojure/clojure "1.7.0"]
+                 [org.deeplearning4j/deeplearning4j-core "0.4-rc3.10"]
+                 [org.deeplearning4j/deeplearning4j-ui "0.4-rc3.10"]
+                 [org.deeplearning4j/deeplearning4j-nlp "0.4-rc3.10"]
+                 [org.apache.commons/commons-io "1.3.2"]
+                 [org.nd4j/nd4j-native "0.4-rc3.10"]
+                 [org.nd4j/canova-api "0.0.0.14"]
+                 [org.clojure/data.json "0.2.6"]
+                 [engagor/clj-vw "0.0.1"]
                  ]
   :main auto-matome.core
   )

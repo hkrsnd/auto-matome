@@ -140,7 +140,7 @@
 
 (defn selected?
   [original-response matome-responses]
-  (or (pmap (fn [matome-response] (= (:num original-response) (:num matome-response)))
+  (or (map (fn [matome-response] (= (:num original-response) (:num matome-response)))
             matome-responses)))
 
 (defn generate-response-labels
@@ -148,3 +148,5 @@
   (doall (pmap (fn [o-res] (if (selected? o-res matome-responses)
                              1
                              0)) original-responses)))
+
+

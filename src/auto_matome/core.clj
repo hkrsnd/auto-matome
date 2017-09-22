@@ -18,7 +18,7 @@
 (require '[auto-matome.io :as io])
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
-(def page-num 10)
+(def page-num 350)
 (def contents-resource "resource/contents.txt")
 (def all-contents-path "resource/all-contents.txt")
 (def contents-resource-base "resource/contents")
@@ -27,7 +27,9 @@
 (def words-resource-path "resource/words.txt")
 (def responses-with-words-resource "resource/responses-with-words.csv")
 (def ids-resource-path "resource/ids.txt")
-(def original-urls-path "resource/original-urls.txt")
+(def original-urls-resource "resource/original-urls.txt")
+(def matome-urls-resource "resource/matome-urls.txt")
+(def original-and-matome-urls-resource "resource/original-and-matome-urls.txt")
 (def vectors-resource-path "resource/vectors.txt")
 (def dictionary-path "resource/dictionary.txt")
 (def id-dictionary-path "resource/id-dictionary.txt")
@@ -57,14 +59,22 @@
     filterd
     ))
 ;; returns pair [original-url, matome-url]
-(defn get-original-and-matome-thread-urls
+(defn get-original-and-matome-urls
   [matome-urls]
   (let [matome-thread-srcs (par-get-html-resource matome-urls)
         original-thread-urls (doall (pmap #(-> % (scr/get-original-thread-url)) matome-thread-srcs))
-        original-and-matome-urls (zipmap original-thread-urls matome-urls)
+        original-and-matome-urls (apply map vector  [original-thread-urls matome-urls])
         filterd (filter #(-> % first scr/is-hayabusa-thread) original-and-matome-urls)]
     filterd
     ))
+
+(defn record-original-and-matome-urls
+  [original-and-matome-urls]
+  (io/record-original-and-matome-thread-urls original-and-matome-urls original-and-matome-urls-resource))
+
+(defn read-original-and-matome-urls
+  []
+  (io/read-original-and-matome-urls original-and-matome-urls-resource))
 
 (defn get-responses-each-original-threads
   [original-urls]
@@ -82,11 +92,19 @@
 
 (defn record-original-urls
   [original-urls]
-  (io/write-strings-line original-urls original-urls-path))
+  (io/write-strings-line original-urls original-urls-resource))
 
 (defn read-original-urls
   []
-  (io/read-contents original-urls-path))
+  (io/read-contents original-urls-resource))
+
+(defn record-matome-urls
+  [matome-urls]
+  (io/write-strings-line matome-urls matome-urls-resource))
+
+(defn read-matome-urls
+  []
+  (io/read-contents matome-urls-resource))
 
 (defn record-responses
   [responses file-path]
@@ -199,7 +217,6 @@
   (let [matome-thread-urls (get-matome-thread-urls)
         original-and-matome-urls (get-original-and-matome-thread-urls matome-thread-urls)]
     original-and-matome-urls))
-        
 
 ;(defn test02
 ;  []
@@ -337,120 +354,20 @@
   []
 ;  (get-responses-each-matome-threads ["http://blog.livedoor.jp/dqnplus/archives/1940297.html"])
   (get-responses-each-original-threads ["http://hayabusa3.2ch.sc/test/read.cgi/news/1505689369/"])
-
   )
 
-;(defn record-original-urls
-;  []
-;  (let [origin-urls (flatten (scr/select-hayabusa-thread-urls (scr/get-thread-urls home-url page-num)))]
-;    (io/write-strings origin-urls origin-urls-path)
-;  ))
+(defn test18
+  []
+  (let [matome-urls (read-matome-urls)
+        original-and-matome-urls (get-original-and-matome-thread-urls matome-urls)]
+    (io/write-strings-line (doall (map #(str/join "," %) original-and-matome-urls)) original-and-matome-urls-resource)
+    ))
 
-;(defn get-responses-by-each-thread
-;  []
-;  (let [origin-urls (scr/select-hayabusa-thread-urls (scr/get-thread-urls home-url page-num))]
-;    (doall (map #(-> % scr/get-html-resource scro/get-responses) origin-urls))
-;    ))
-
-
-;  (let [size (count words-set)
-;        range (range 1 size)
-;        zipped (apply map list [words-set range])]
-;;    (println zipped)
-;    (loop [result {} zip (first zipped)]
-;      (println zip)
-;      (if (= zip nil)
-;        result
-;        (recur (assoc result (first zip) (second zip)) (rest zipped))
-;        )
-;      )
-;    )
-;  )
+(defn test19
+  []
+  (let [matome-urls (get-matome-thread-urls)]
+    (record-matome-urls matome-urls)))
 
 (defn -main
   [& args]
   (println "main"))
-
-;(defn test01
-;  []
-;  (let [origin-url "http://hayabusa3.2ch.sc/test/read.cgi/news/1505522180/"
-;        responses (-> origin-url scr/get-html-resource scro/get-responses)
-;        contents (map #(-> % :content) responses)]
-;    (io/write-strings contents contents-resource)
-;    )
-;  )
-;
-;(defn test02
-;  []
-;;  (doseq [x (io/read-contents "resource/contents.txt")]
-;  (map #(-> % morphological-analysis-sentence) (io/read-contents "resource/contents.txt"))
-;  )
-;
-;(defn test03
-;  []
-;  (let [responses (get-responses)
-;        contents (map #(-> % :content) responses)]
-;    (io/write-strings contents contents-resource)
-;    ))
-;
-;(defn test04
-;  []
-;  (make-words-set-from-text contents-resource))
-;
-;(defn test05
-;  []
-;  (let [responses (get-responses)
-;        contents (map #(-> % :content) responses)
-;        buffer (io/write-strings contents contents-resource)
-;        words (make-words-set-from-text contents-resource)]
-;  (io/write-words words dictionary-path)
-;  ))
-;
-;(defn test06
-;  []
-;  (let [;contents (io/read-contents contents-resource)
-;        words (make-words-set-from-text contents-resource)]
-;    (io/write-words words dictionary-path)
-;    ))
-;
-;(defn test07
-;  []
-;  (let [words (make-words-set-from-text contents-resource)]
-;    (from-set-to-dictionary words)
-;    ))
-;
-;(defn test08
-;  []
-;  (let [responses-list (get-responses-by-each-thread)]
-;    (loop [responses-list-tmp responses-list count 1]
-;      (let [responses (first responses-list-tmp)]
-;        (if (empty? responses)
-;          (println "finished")
-;          (let [contents (map #(-> % :content) responses)
-;                contents-resource-path (str/join [contents-resource-base "_" count ".txt"])]
-;            (io/write-strings contents contents-resource-path)
-;            (recur (rest responses-list-tmp) (inc count))
-;            )
-;          ))
-;      )
-;    )
-;  )
-;  (println "===== Simple Pattern =====")
-;  (doseq [t (morphological-analysis-sentence "黒い大きな瞳の男の娘")]
-;    (println t))
-;
-;  (println "===== Filter Pattern =====")
-                                        ;  (doseq [t (morphological-analysis-sentence
-
-;             "僕はウナギだし象は鼻が長い"
-;             #(not (nil? (re-find #"名詞" (nth % 2)))))]
-;    (println t)))
-
-;;  (println "===== 坊ちゃん =====")
-;;  (let [tokens (morphological-analysis-sentence (slurp "bocchan.txt")
-;;                                                #(not (nil? (re-find #"名詞" (nth % 2)))))
-;;        words (flatten (map #(first %) tokens))]
-;;    (view (bar-chart (keys a(top10 words)) (vals (top10 words))))
-;;    (save (bar-chart (keys (top10 words)) (vals (top10 words))) "natume.png" :width 600)
-;;    (save (bar-chart (keys (top100 words)) (vals (top100 words))) "natume_zip.png" :width 600)))
-
