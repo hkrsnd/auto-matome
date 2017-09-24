@@ -19,7 +19,7 @@
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
 (def page-num 10)
-(def response-file-num 10)
+(def response-file-num 8)
 (def contents-resource "resource/contents.txt")
 (def all-contents-path "resource/all-contents.txt")
 (def contents-resource-base "resource/contents")
@@ -157,10 +157,16 @@
     (io/write-strings-line res-strs file-path)
     ))
 
-;(defn read-responses-with-words
-;  []
-; (io/read-responses-with-words responses-with-words-resource))
-
+(defn read-responses-with-words-from-indexed-files
+  []
+  (let [indexes (range 1 response-file-num)]
+    (doall (map (fn [index]
+                   (let [matome-responses (io/read-responses-with-words (str/join [matome-thread-responses-with-words-resource-base index ".csv"]))
+                         original-responses (io/read-responses-with-words (str/join [original-thread-responses-with-words-resource-base index ".csv"]))]
+                     [matome-responses original-responses]
+                     ))
+                   indexes))
+    ))
 
 (defn record-original-and-matome-responses-with-words
   [original-responses-list matome-responses-list]
