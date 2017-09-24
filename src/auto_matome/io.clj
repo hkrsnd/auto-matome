@@ -9,7 +9,10 @@
   [strs file-path]
   (with-open [w (writer file-path)]
     (doseq [line strs]
-      (.write w line))))
+      (println line)
+      (if (= line "\n")
+        nil
+        (.write w line)))))
 
 (defn write-strings-line
   [strs file-path]
@@ -26,6 +29,7 @@
 
 (defn read-csv
   [file-path]
+  (println file-path)
   (with-open [r (reader file-path)]
     (loop [line (.readLine r)
            result []]
@@ -50,7 +54,8 @@
            result []]
       (if (nil? line)
         result
-        (recur (.readLine r) (conj result (csv-to-response line)))))))
+          (recur (.readLine r) (conj result (csv-to-response line)))
+          ))))
 
 (defn record-dictionary
   [word-index-maps file-path]
@@ -86,8 +91,10 @@
 (defn record-original-and-matome-urls
   [original-and-matome-urls file-path]
   (let [joined-strs (doall (map #(str/join "," %) original-and-matome-urls))]
-    (io/write-strings-line joined-strs  file-path)))
+    (write-strings-line joined-strs  file-path)))
 
 (defn read-original-and-matome-urls
   [file-path]
-  (read-csv file-path))
+  (let [lines (read-contents file-path)]
+    (doall (map #(str/split % #",") lines)))
+  )

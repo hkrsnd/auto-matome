@@ -87,10 +87,12 @@
 
 (defn parse-target
   [down-block]
-  (let [target (-> down-block second :content first)]
-    (second (re-find-ex #">>(\d+)" target))
-    )
-  )
+  (let [row-target (-> down-block second :content first)
+        re-target #">>([0-9]+)"
+        matched (re-find-ex re-target row-target)]
+    (if (nil? matched)
+      "nil"
+      (second matched))))
 
 (defn parse-response
   [row-res]

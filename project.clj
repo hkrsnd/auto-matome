@@ -21,7 +21,6 @@
                  [org.nd4j/nd4j-native "0.4-rc3.10"]
                  [org.nd4j/canova-api "0.0.0.14"]
                  [org.clojure/data.json "0.2.6"]
-                 [engagor/clj-vw "0.0.1"]
                  ]
   :main auto-matome.core
   )

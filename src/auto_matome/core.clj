@@ -18,7 +18,8 @@
 (require '[auto-matome.io :as io])
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
-(def page-num 350)
+(def page-num 10)
+(def response-file-num 10)
 (def contents-resource "resource/contents.txt")
 (def all-contents-path "resource/all-contents.txt")
 (def contents-resource-base "resource/contents")
@@ -70,7 +71,7 @@
 
 (defn record-original-and-matome-urls
   [original-and-matome-urls]
-  (io/record-original-and-matome-thread-urls original-and-matome-urls original-and-matome-urls-resource))
+  (io/record-original-and-matome-urls original-and-matome-urls original-and-matome-urls-resource))
 
 (defn read-original-and-matome-urls
   []
@@ -122,7 +123,7 @@
   [original-responses-list matome-responses-list] ; this would be read from resource file
   (let [paired-responses-list (zipmap original-responses-list matome-responses-list)
         indexed-paired-responses-list (map-indexed #(vector %1 %2) paired-responses-list)]
-    (doall (pmap (fn [index-and-paired-responses]
+    (doall (map (fn [index-and-paired-responses]
             (let [index (first index-and-paired-responses)
                   paired-responses (second index-and-paired-responses)
                   original-responses (first paired-responses)
@@ -132,6 +133,17 @@
               (record-responses original-responses original-record-path)
               (record-responses matome-responses matome-record-path)              
               )) indexed-paired-responses-list))))
+
+(defn read-responses-from-indexed-files
+  []
+  (let [indexes (range 1 response-file-num)]
+    (doall (map (fn [index]
+                   (let [matome-responses (io/read-csv-responses (str/join [matome-thread-responses-base index ".csv"]))
+                         original-responses (io/read-csv-responses (str/join [original-thread-responses-base index ".csv"]))]
+                     [matome-responses original-responses]
+                     ))
+                   indexes))
+    ))
 
 (defn read-all-response-csv
   []
@@ -215,7 +227,7 @@
 (defn test011
   []
   (let [matome-thread-urls (get-matome-thread-urls)
-        original-and-matome-urls (get-original-and-matome-thread-urls matome-thread-urls)]
+        original-and-matome-urls (get-original-and-matome-urls matome-thread-urls)]
     original-and-matome-urls))
 
 ;(defn test02
@@ -336,17 +348,19 @@
 ;
 (defn test16
   []
-  (let [matome-urls (get-matome-thread-urls)
-        original-and-matome-urls (get-original-and-matome-thread-urls matome-urls)
+  (let [;matome-urls (get-matome-thread-urls)
+                                        ;original-and-matome-urls (get-original-and-matome-urls matome-urls)
+        original-and-matome-urls (read-original-and-matome-urls)
        ; original-and-matome-urls [["http://hayabusa3.2ch.sc/test/read.cgi/news/1505689369/"]["http://blog.livedoor.jp/dqnplus/archives/1940297.html"]]
-        original-urls (map #(first %) original-and-matome-urls)
-        matome-urls (map #(second %) original-and-matome-urls)
+        original-urls (doall (map #(first %) original-and-matome-urls))
+        matome-urls (doall (map #(second %) original-and-matome-urls))
         original-responses-list (get-responses-each-original-threads original-urls)
         matome-responses-list (get-responses-each-matome-threads matome-urls)]
 ;    (println matome-urls)
 ;    (println original-urls)
 ;    (println (first original-responses-list))
-    ;(println (first matome-responses-list))
+                                        ;(println (first matome-responses-list))
+    (println original-and-matome-urls)
     (record-original-and-matome-responses-list-to-indexed-file original-responses-list matome-responses-list)
     ))
 
@@ -359,7 +373,7 @@
 (defn test18
   []
   (let [matome-urls (read-matome-urls)
-        original-and-matome-urls (get-original-and-matome-thread-urls matome-urls)]
+        original-and-matome-urls (get-original-and-matome-urls matome-urls)]
     (io/write-strings-line (doall (map #(str/join "," %) original-and-matome-urls)) original-and-matome-urls-resource)
     ))
 
@@ -367,6 +381,10 @@
   []
   (let [matome-urls (get-matome-thread-urls)]
     (record-matome-urls matome-urls)))
+
+(defn test20
+  []
+  (read-responses-from-indexed-files))
 
 (defn -main
   [& args]
