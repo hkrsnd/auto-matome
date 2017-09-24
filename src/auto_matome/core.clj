@@ -26,7 +26,8 @@
 (def original-thread-responses-base "resource/original-responses/original-thread-")
 (def matome-thread-responses-base "resource/matome-responses/matome-thread-")
 (def words-resource-path "resource/words.txt")
-(def responses-with-words-resource "resource/responses-with-words.csv")
+(def matome-thread-responses-with-words-resource-base "resource/matome-responses-with-words/matome-thread-")
+(def original-thread-responses-with-words-resource-base "resource/original-responses-with-words/original-thread-")
 (def ids-resource-path "resource/ids.txt")
 (def original-urls-resource "resource/original-urls.txt")
 (def matome-urls-resource "resource/matome-urls.txt")
@@ -134,6 +135,7 @@
               (record-responses matome-responses matome-record-path)              
               )) indexed-paired-responses-list))))
 
+
 (defn read-responses-from-indexed-files
   []
   (let [indexes (range 1 response-file-num)]
@@ -144,6 +146,36 @@
                      ))
                    indexes))
     ))
+
+(defn to-responses-with-words
+  [responses]
+  (doall (pmap (fn [res] (to-response-with-words res)) responses)))
+
+(defn record-responses-with-words
+  [responses-with-words file-path]
+  (let [res-strs (doall (pmap (fn [res] (response-with-words-to-csv-string res)) responses-with-words))]
+    (io/write-strings-line res-strs file-path)
+    ))
+
+;(defn read-responses-with-words
+;  []
+; (io/read-responses-with-words responses-with-words-resource))
+
+
+(defn record-original-and-matome-responses-with-words
+  [original-responses-list matome-responses-list]
+  (let [paired-responses-list (zipmap original-responses-list matome-responses-list)
+        indexed-paired-responses-list (map-indexed #(vector %1 %2) paired-responses-list)]
+    (doall (map (fn [index-and-paired-responses]
+            (let [index (first index-and-paired-responses)
+                  paired-responses (second index-and-paired-responses)
+                  original-responses (first paired-responses)
+                  matome-responses (second paired-responses)
+                  original-record-path (str/join [original-thread-responses-with-words-resource-base index ".csv"])
+                  matome-record-path (str/join [matome-thread-responses-with-words-resource-base index ".csv"])]
+              (record-responses-with-words original-responses original-record-path)
+              (record-responses-with-words matome-responses matome-record-path)              
+              )) indexed-paired-responses-list))))
 
 (defn read-all-response-csv
   []
@@ -198,19 +230,6 @@
   [id-index-map]
   (io/record-id-dictionary id-index-map id-dictionary-path))
 
-(defn to-responses-with-words
-  [responses]
-  (doall (pmap (fn [res] (to-response-with-words res)) responses)))
-
-(defn record-responses-with-words
-  [responses-with-words]
-  (let [res-strs (doall (pmap (fn [res] (response-with-words-to-csv-string res)) responses-with-words))]
-    (io/write-strings-line res-strs responses-with-words-resource)
-    ))
-
-(defn read-responses-with-words
-  []
-  (io/read-responses-with-words responses-with-words-resource))
 
 (defn record-vectors
   [vecs]
@@ -315,28 +334,31 @@
 
 (defn test12
   []
-  (let [responses (read-all-response-csv)
-        responses-with-words (to-responses-with-words responses)]
-    (record-responses-with-words responses-with-words)))
+  (let [responses (read-responses-from-indexed-files)
+        original-responses-list (doall (map #(first %) responses))
+        matome-responses-list (doall (map #(second %) responses))
+        original-responses-with-words (doall (map #(to-responses-with-words %) original-responses-list))
+        matome-responses-with-words (doall (map #(to-responses-with-words %) matome-responses-list))]
+    (record-original-and-matome-responses-with-words original-responses-with-words matome-responses-with-words)))
 
-(defn test13
-  []
-  (let [
-        dic (read-dictionary)
-        id-dic (read-id-dictionary)
-        responses-with-words (read-responses-with-words)]
-    (doall (pmap #(response-with-words-to-vector % dic id-dic) responses-with-words))
-    ))
+;(defn test13
+;  []
+;  (let [
+;        dic (read-dictionary)
+;        id-dic (read-id-dictionary)
+;        responses-with-words (read-responses-with-words)]
+;    (doall (pmap #(response-with-words-to-vector % dic id-dic) responses-with-words))
+;    ))
 
-(defn test14
-  []
-  (let [dic (read-dictionary)
-        id-dic (read-id-dictionary)
-        responses-with-words (read-responses-with-words)
-        vecs (doall (pmap #(response-with-words-to-vector % dic id-dic) responses-with-words))
-        padded (padding-vectors vecs)]
-    (record-vectors padded)
-    ))
+;(defn test14
+;  []
+;  (let [dic (read-dictionary)
+;        id-dic (read-id-dictionary)
+;        responses-with-words (read-responses-with-words)
+;        vecs (doall (pmap #(response-with-words-to-vector % dic id-dic) responses-with-words))
+;        padded (padding-vectors vecs)]
+;    (record-vectors padded)
+;    ))
 
 ;(defn test15
 ;  []
