@@ -158,10 +158,9 @@
     (doall (map (fn [zip]
                   (let [original-responses (first zip)
                         matome-responses (second zip)]
-                    (map (fn [o-res] (selected? o-res matome-responses)) original-responses)
+                    (map (fn [o-res] (if (selected? o-res matome-responses)
+                                       1
+                                       0
+                                       )) original-responses)
                     ))
                    zipped-original-matome-responses-list))))
-  
-;  (doall (pmap (fn [o-res] (if (selected? o-res matome-responses)
-;                             1
-;                             0)) original-responses)))

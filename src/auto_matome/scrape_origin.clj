@@ -123,7 +123,7 @@
         ids (map #(parse-id %) date-id-strings)
         targets (flatten (map #(parse-target %) down-blocks))
         contents  (doall (map (fn[b] (parse-contents b)) down-blocks))
-        zipped (apply map list [nums ids date-times targets contents])
+        zipped (rest (apply map list [nums ids date-times targets contents]))
         ]
     (map #(struct response
                   (nth % 0)

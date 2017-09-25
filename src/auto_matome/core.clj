@@ -9,7 +9,9 @@
   (:use (incanter core stats charts io)
         [auto-matome.thread]
         [auto-matome.morpho]
-        [auto-matome.data])
+        [auto-matome.data]
+;        [auto-matome.learn]
+        )
   (:require [clojure.string :as str]))
 
 
@@ -36,6 +38,7 @@
 (def dictionary-path "resource/dictionary.txt")
 (def id-dictionary-path "resource/id-dictionary.txt")
 (def original-thread-responses-csv-num 3073)
+(def train-data-resource "resource/train-data.csv")
 
 ;(defn get-responses
 ;  []
@@ -260,6 +263,22 @@
   (let [csv-strs (doall (pmap #(vector-to-csv-string %) vecs))]
     (io/write-strings-line csv-strs vectors-resource-path)))
 
+;(defn record-vectors-with-labels
+;  [vectors-list labels-list]
+;  (let [zipped (zipmap vectors-list labels-list)
+;        vectors-labels-maps (doall (pmap (fn [z] (zipmap (first z) (second z))) zipped))
+;        vectors-labels (doall (pmap #(flatten %) (reduce conj vectors-labels-maps)))
+;        csv-strings (doall (map (fn [vl] (str/join "," vl)) vectors-labels))]
+;    (io/write-strings-line csv-strings train-data-resource)
+                                        ;    ))
+(defn record-vectors-with-labels
+  [padded-vectors labels]
+  (let [vectors-labels (doall (pmap #(flatten (conj (first %) (second %))) (zipmap padded-vectors labels)))
+        csv-strings (doall (map (fn [vl] (str/join "," vl)) vectors-labels))]
+    (io/write-strings-line csv-strings train-data-resource)
+))
+
+
 (defn test01
   []
   (let [matome-thread-urls (get-matome-thread-urls)
@@ -421,7 +440,7 @@
   []
   (let [matome-urls (read-matome-urls)
         original-and-matome-urls (get-original-and-matome-urls matome-urls)]
-    (io/write-strings-line (doall (map #(str/join "," %) original-and-matome-urls)) original-and-matome-urls-resource)
+    (io/write-strings-line (doall (map #(str/join ",") original-and-matome-urls)) original-and-matome-urls-resource)
     ))
 
 (defn test19
@@ -439,11 +458,15 @@
 
 (defn test22
   []
-  (let [original-responses  (read-all-original-responses)
-        matome-responses (read-all-matome-responses)]
-;    (println original-responses)
-;    (println matome-responses)
-    (generate-response-labels original-responses matome-responses))
+  (let [original-responses-list  (read-all-original-responses)
+        matome-responses-list (read-all-matome-responses)
+        labels (flatten (generate-response-labels original-responses-list matome-responses-list))
+        dic (read-dictionary)
+        id-dic (read-id-dictionary)
+        vecs (reduce conj (map (fn [x] (map (fn [y] (response-to-vector y dic id-dic)) x)) original-responses-list))
+        padded (padding-vectors vecs)]
+    (record-vectors-with-labels padded labels)
+    )
   )
 
 (defn -main
