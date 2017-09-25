@@ -81,16 +81,12 @@
 (defn get-responses-each-original-threads
   [original-urls]
   (let [original-srcs (par-get-html-resource original-urls)]
-    (doall (map #(-> % scro/get-original-responses) original-srcs))
-    )
-  )
+    (doall (map #(-> % scro/get-original-responses) original-srcs))))
 
 (defn get-responses-each-matome-threads
   [matome-urls]
   (let [matome-srcs (par-get-html-resource matome-urls)]
-    (pmap #(-> % scr/get-matome-responses) matome-srcs)
-    )
-  )
+    (pmap #(-> % scr/get-matome-responses) matome-srcs)))
 
 (defn record-original-urls
   [original-urls]
@@ -111,14 +107,12 @@
 (defn record-responses
   [responses file-path]
   (let [res-strs (map #(response-to-string %) responses)]
-    (io/write-strings res-strs file-path)
-    ))
+    (io/write-strings res-strs file-path)))
 
 (defn record-contents
   [responses file-path]
   (let [contents (map #(:content %) responses)]
-    (io/write-strings-line contents file-path)
-    ))
+    (io/write-strings-line contents file-path)))
 
 (defn record-original-and-matome-responses-list-to-indexed-file
   [original-responses-list matome-responses-list] ; this would be read from resource file
@@ -135,17 +129,15 @@
               (record-responses matome-responses matome-record-path)              
               )) indexed-paired-responses-list))))
 
-
 (defn read-responses-from-indexed-files
   []
-  (let [indexes (range 1 response-file-num)]
+  (let [indexes (range response-file-num)]
     (doall (map (fn [index]
                    (let [matome-responses (io/read-csv-responses (str/join [matome-thread-responses-base index ".csv"]))
                          original-responses (io/read-csv-responses (str/join [original-thread-responses-base index ".csv"]))]
                      [matome-responses original-responses]
                      ))
-                   indexes))
-    ))
+                   indexes))))
 
 (defn to-responses-with-words
   [responses]
@@ -154,19 +146,30 @@
 (defn record-responses-with-words
   [responses-with-words file-path]
   (let [res-strs (doall (pmap (fn [res] (response-with-words-to-csv-string res)) responses-with-words))]
-    (io/write-strings-line res-strs file-path)
-    ))
+    (io/write-strings-line res-strs file-path)))
 
 (defn read-responses-with-words-from-indexed-files
   []
-  (let [indexes (range 1 response-file-num)]
+  (let [indexes (range response-file-num)]
     (doall (map (fn [index]
                    (let [matome-responses (io/read-responses-with-words (str/join [matome-thread-responses-with-words-resource-base index ".csv"]))
                          original-responses (io/read-responses-with-words (str/join [original-thread-responses-with-words-resource-base index ".csv"]))]
                      [matome-responses original-responses]
                      ))
-                   indexes))
-    ))
+                indexes))))
+
+(defn read-all-original-responses
+  []
+  (let [indexes (range response-file-num)]
+    (flatten (map (fn [index]
+                    (io/read-csv-responses (str/join [original-thread-responses-base index ".csv"]))) indexes))))
+
+(defn read-all-original-responses-with-words
+  []
+  (let [indexes (range response-file-num)]
+    (flatten (map (fn [index]
+                   (io/read-responses-with-words (str/join [original-thread-responses-with-words-resource-base index ".csv"])))
+                indexes))))
 
 (defn record-original-and-matome-responses-with-words
   [original-responses-list matome-responses-list]
@@ -185,27 +188,31 @@
 
 (defn read-all-response-csv
   []
-  (let [rs (range 0 original-thread-responses-csv-num)]
+  (let [rs (range original-thread-responses-csv-num)]
     (flatten
      (doall (pmap #(let [csv-path (str/join [original-thread-responses-base % ".csv"])]
               (println (str/join ["reading: " csv-path]))
               (io/read-csv-responses csv-path)
-              ) rs)))
-    )
-  )
+              ) rs)))))
 
 (defn make-words-set-from-contents-resource
   [file-path]
   (let [contents (io/read-contents file-path)
         analyzed (pmap #(-> % morphological-analysis-sentence) contents)
         words-set (set (flatten (map (fn [x] (map (fn [y] (first y)) x)) analyzed)))]
-    words-set
-    ))
+    words-set))
+
+(defn make-words-set-from-indexed-files
+  []
+  (let [original-responses-with-words (read-all-original-responses-with-words)
+        contents (flatten (map #(:content %) original-responses-with-words))
+        analyzed (pmap #(-> % morphological-analysis-sentence) contents)
+        words-set (set (flatten (map (fn [x] (map (fn [y] (first y)) x)) analyzed)))]
+    words-set))
 
 (defn record-words
   [words]
-  (io/write-strings-line words words-resource-path)
-  )
+  (io/write-strings-line words words-resource-path))
 
 (defn read-words
   []
@@ -235,7 +242,6 @@
 (defn record-id-dictionary
   [id-index-map]
   (io/record-id-dictionary id-index-map id-dictionary-path))
-
 
 (defn record-vectors
   [vecs]
@@ -297,7 +303,7 @@
 
 (defn test06
   []
-  (let [words (make-words-set-from-contents-resource all-contents-path)]
+  (let [words (make-words-set-from-indexed-files)]
     (record-words words)
     ))
 
@@ -311,7 +317,7 @@
 ;;record ids
 (defn test08
   []
-  (let [responses (read-all-response-csv)]
+  (let [responses (read-all-original-responses)]
     (record-ids responses)
     ))
 
@@ -326,17 +332,18 @@
 
 (defn test10
   []
-  (let [responses (read-all-response-csv)
+  (let [responses (read-all-original-responses)
         dic (read-dictionary)
-        id-dic (read-id-dictionary)]
-    (doall (pmap #(response-to-vector % dic id-dic) responses))
+        id-dic (read-id-dictionary)
+        vecs (doall (pmap #(response-to-vector % dic id-dic) responses))
+        padded (padding-vectors vecs)]
+    padded
     ))
 
 (defn test11
   []
   (let [responses (read-all-response-csv)]
-    (to-responses-with-words responses))
-  )
+    (to-responses-with-words responses)))
 
 (defn test12
   []
@@ -413,6 +420,10 @@
 (defn test20
   []
   (read-responses-from-indexed-files))
+
+(defn test21
+  []
+  (make-words-set-from-indexed-files))
 
 (defn -main
   [& args]
