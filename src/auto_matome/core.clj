@@ -161,14 +161,26 @@
 (defn read-all-original-responses
   []
   (let [indexes (range response-file-num)]
-    (flatten (map (fn [index]
-                    (io/read-csv-responses (str/join [original-thread-responses-base index ".csv"]))) indexes))))
+    (doall (map (fn [index]
+                  (io/read-csv-responses (str/join [original-thread-responses-base index ".csv"]))) indexes))))
+
+(defn read-all-matome-responses
+  []
+  (let [indexes (range response-file-num)]
+    (doall (map (fn [index]
+                  (io/read-csv-responses (str/join [matome-thread-responses-base index ".csv"]))) indexes))))
 
 (defn read-all-original-responses-with-words
   []
   (let [indexes (range response-file-num)]
-    (flatten (map (fn [index]
+    (doall (map (fn [index]
                    (io/read-responses-with-words (str/join [original-thread-responses-with-words-resource-base index ".csv"])))
+                  indexes))))
+(defn read-all-matome-responses-with-words
+  []
+  (let [indexes (range response-file-num)]
+    (doall (map (fn [index]
+                   (io/read-responses-with-words (str/join [matome-thread-responses-with-words-resource-base index ".csv"])))
                 indexes))))
 
 (defn record-original-and-matome-responses-with-words
@@ -204,7 +216,7 @@
 
 (defn make-words-set-from-indexed-files
   []
-  (let [original-responses-with-words (read-all-original-responses-with-words)
+  (let [original-responses-with-words (flatten (read-all-original-responses-with-words))
         contents (flatten (map #(:content %) original-responses-with-words))
         analyzed (pmap #(-> % morphological-analysis-sentence) contents)
         words-set (set (flatten (map (fn [x] (map (fn [y] (first y)) x)) analyzed)))]
@@ -317,7 +329,7 @@
 ;;record ids
 (defn test08
   []
-  (let [responses (read-all-original-responses)]
+  (let [responses (flatten (read-all-original-responses))]
     (record-ids responses)
     ))
 
@@ -332,7 +344,7 @@
 
 (defn test10
   []
-  (let [responses (read-all-original-responses)
+  (let [responses (flatten (read-all-original-responses))
         dic (read-dictionary)
         id-dic (read-id-dictionary)
         vecs (doall (pmap #(response-to-vector % dic id-dic) responses))
@@ -424,6 +436,15 @@
 (defn test21
   []
   (make-words-set-from-indexed-files))
+
+(defn test22
+  []
+  (let [original-responses  (read-all-original-responses)
+        matome-responses (read-all-matome-responses)]
+;    (println original-responses)
+;    (println matome-responses)
+    (generate-response-labels original-responses matome-responses))
+  )
 
 (defn -main
   [& args]

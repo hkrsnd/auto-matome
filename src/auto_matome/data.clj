@@ -138,15 +138,30 @@
               (concat vec add-part)))
           vecs)))
 
+(defn seq-or
+  [bools]
+  (loop [bool (first bools) tmp-bools (rest bools)]
+    (if (empty? tmp-bools)
+      false
+      (if bool
+        true
+        (recur (first tmp-bools) (rest tmp-bools))))))
+
 (defn selected?
   [original-response matome-responses]
-  (or (map (fn [matome-response] (= (:num original-response) (:num matome-response)))
+  (seq-or (map (fn [matome-response] (= (:num original-response) (:num matome-response)))
             matome-responses)))
 
 (defn generate-response-labels
-  [original-responses matome-responses]
-  (doall (pmap (fn [o-res] (if (selected? o-res matome-responses)
-                             1
-                             0)) original-responses)))
-
-
+  [original-responses-list matome-responses-list]
+  (let [zipped-original-matome-responses-list (zipmap original-responses-list matome-responses-list)]
+    (doall (map (fn [zip]
+                  (let [original-responses (first zip)
+                        matome-responses (second zip)]
+                    (map (fn [o-res] (selected? o-res matome-responses)) original-responses)
+                    ))
+                   zipped-original-matome-responses-list))))
+  
+;  (doall (pmap (fn [o-res] (if (selected? o-res matome-responses)
+;                             1
+;                             0)) original-responses)))

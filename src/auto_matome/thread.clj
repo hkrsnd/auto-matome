@@ -29,7 +29,6 @@
 
 (defn csv-to-response
   [csv-string]
-  (println csv-string)
     (let [sp (str/split csv-string #",")
           rest (subvec sp 4)
           content (str/join "," rest)]
