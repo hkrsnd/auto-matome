@@ -4,7 +4,7 @@
         [auto-matome.morpho]
         [auto-matome.regex]))
 
-(def limit-num 30)
+(def limit-num 40)
 
 (defn zipped-vector-to-map
   [zipped-vec]
@@ -69,7 +69,9 @@
 ; "10"->10, "09"->9
 (defn parse-int [s]
   (try
-    (Integer. (re-find  #"\d+" s ))
+    (if (integer? s)
+      s
+      (Integer. (re-find  #"\d+" s)))
     (catch Exception e 0)))
 
 (defn response-to-vector
@@ -79,10 +81,13 @@
         id-vec (id-to-vector (:id response) id-dictionary)
         datetime-vec (datetime-to-vector (:datetime response))
         target-vec (target-to-vector (:target response))
-        content-vec (words-to-vector (text-to-words (:content response)) dictionary)
+        words (text-to-words (:content response))
+        content-vec (words-to-vector words dictionary)
         ]
     (print "ToVector: ")
     (println response)
+    (println words)
+    (println content-vec)
     (doall
      (pmap #(parse-int %)
            (flatten [num-vec id-vec datetime-vec target-vec content-vec])))))

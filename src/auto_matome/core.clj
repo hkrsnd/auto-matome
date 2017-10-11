@@ -297,19 +297,21 @@
           dictionary (from-set-to-dictionary words)
           responses (flatten original-responses-list)
           ids (doall (map #(:id %) responses))
-          id-dictionary (from-set-to-id-dictionary ids)
-          vecs (reduce conj (map (fn [x] (map (fn [y] (response-to-vector y dictionary id-dictionary)) x)) original-responses-list))
-          padded (padding-vectors vecs)
-          labels (flatten (generate-response-labels original-responses-list matome-responses-list))
-       ]
-
-    (record-words words)
-    (record-ids ids)
-    (record-dictionary dictionary)
-    (record-id-dictionary id-dictionary)
-    (record-vectors-with-labels padded labels)
-  )))
-
+          id-dictionary (from-set-to-id-dictionary ids)]
+      (record-words words)
+      (record-ids ids)
+      (record-dictionary dictionary)
+      (record-id-dictionary id-dictionary)
+      (let
+          [
+           vecs (doall (map #(response-to-vector % dictionary id-dictionary) responses))
+           padded (padding-vectors vecs)
+           labels (flatten (generate-response-labels original-responses-list matome-responses-list))
+           ]
+        (record-vectors-with-labels padded labels)
+        (doall (map #(println %) vecs))
+        padded
+        ))))
 
 (defn test01
   []
