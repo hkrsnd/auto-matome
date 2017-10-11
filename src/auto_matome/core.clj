@@ -20,8 +20,8 @@
 (require '[auto-matome.io :as io])
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
-(def page-num 10)
-(def response-file-num 8)
+(def page-num 1)
+(def response-file-num 5)
 (def contents-resource "resource/contents.txt")
 (def all-contents-path "resource/all-contents.txt")
 (def contents-resource-base "resource/contents")
@@ -260,7 +260,7 @@
 
 (defn record-vectors
   [vecs]
-  (let [csv-strs (doall (pmap #(vector-to-csv-string %) vecs))]
+  (let [csv-strs (doall (map #(vector-to-csv-string %) vecs))]
     (io/write-strings-line csv-strs vectors-resource-path)))
 
 ;(defn record-vectors-with-labels
@@ -276,7 +276,39 @@
   (let [vectors-labels (doall (pmap #(flatten (conj (first %) (second %))) (zipmap padded-vectors labels)))
         csv-strings (doall (map (fn [vl] (str/join "," vl)) vectors-labels))]
     (io/write-strings-line csv-strings train-data-resource)
-))
+    ))
+
+(defn refresh-contents
+  []
+  (let 
+      [matome-urls (get-matome-thread-urls)
+       original-and-matome-urls (get-original-and-matome-urls matome-urls)
+       original-urls (doall (map #(first %) original-and-matome-urls))
+       matome-urls (doall (map #(second %) original-and-matome-urls))
+       original-responses-list (get-responses-each-original-threads original-urls)
+       matome-responses-list (get-responses-each-matome-threads matome-urls)
+       original-responses-with-words (doall (map #(to-responses-with-words %) original-responses-list))
+       matome-responses-with-words (doall (map #(to-responses-with-words %) matome-responses-list))]
+    (io/write-strings-line (doall (map #(str/join "," %) original-and-matome-urls)) original-and-matome-urls-resource)
+    (record-original-and-matome-responses-list-to-indexed-file original-responses-list matome-responses-list)
+    (record-original-and-matome-responses-with-words original-responses-with-words matome-responses-with-words)
+    (let [
+          words (make-words-set-from-indexed-files)
+          dictionary (from-set-to-dictionary words)
+          responses (flatten original-responses-list)
+          ids (doall (map #(:id %) responses))
+          id-dictionary (from-set-to-id-dictionary ids)
+          vecs (reduce conj (map (fn [x] (map (fn [y] (response-to-vector y dictionary id-dictionary)) x)) original-responses-list))
+          padded (padding-vectors vecs)
+          labels (flatten (generate-response-labels original-responses-list matome-responses-list))
+       ]
+
+    (record-words words)
+    (record-ids ids)
+    (record-dictionary dictionary)
+    (record-id-dictionary id-dictionary)
+    (record-vectors-with-labels padded labels)
+  )))
 
 
 (defn test01
@@ -465,9 +497,9 @@
         id-dic (read-id-dictionary)
         vecs (reduce conj (map (fn [x] (map (fn [y] (response-to-vector y dic id-dic)) x)) original-responses-list))
         padded (padding-vectors vecs)]
+    (doall (map #(println %) padded))
     (record-vectors-with-labels padded labels)
-    )
-  )
+    ))
 
 (defn -main
   [& args]

@@ -4,6 +4,7 @@
         [auto-matome.morpho]
         [auto-matome.regex]))
 
+(def limit-num 30)
 
 (defn zipped-vector-to-map
   [zipped-vec]
@@ -42,8 +43,8 @@
 
 (defn words-to-vector
   [words dictionary]
-  (doall (pmap (fn [word]
-          (search-dictionary-by-word word dictionary)) words)))
+    (doall (pmap (fn [word]
+                   (search-dictionary-by-word word dictionary)) words)))
 
 (defn num-to-vector
   [num]
@@ -78,7 +79,8 @@
         id-vec (id-to-vector (:id response) id-dictionary)
         datetime-vec (datetime-to-vector (:datetime response))
         target-vec (target-to-vector (:target response))
-        content-vec (words-to-vector (text-to-words (:content response)) dictionary)]
+        content-vec (words-to-vector (text-to-words (:content response)) dictionary)
+        ]
     (print "ToVector: ")
     (println response)
     (doall
@@ -128,15 +130,25 @@
             (recur (count (first vecs-tmp)) (rest vecs-tmp))
             (recur max-length (rest vecs-tmp))))))
 
+(defn padding-zero
+  [vec padding-num]
+    (concat vec (repeat padding-num 0))
+  )
+;  (let [max-length (find-max-length vecs)]
+;    (pmap (fn [vec]
+;            (let [length (count vec)
+;                  diff (- max-length length)
+;                  add-part (repeat diff 0)]
+;              (concat vec add-part)))
+;          vecs)))
+
 (defn padding-vectors
   [vecs]
-  (let [max-length (find-max-length vecs)]
-    (pmap (fn [vec]
-            (let [length (count vec)
-                  diff (- max-length length)
-                  add-part (repeat diff 0)]
-              (concat vec add-part)))
-          vecs)))
+  (doall (pmap (fn [vec] 
+          (if (> (count vec) limit-num)
+            (take limit-num vec)
+            (padding-zero vec (- limit-num (count vec)))))
+        vecs)))
 
 (defn seq-or
   [bools]
