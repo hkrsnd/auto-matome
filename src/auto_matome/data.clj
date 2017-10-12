@@ -1,5 +1,6 @@
 (ns auto-matome.data
-  (:require [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [auto-matome.io :as io])
   (:use [auto-matome.thread]
         [auto-matome.morpho]
         [auto-matome.regex]))
@@ -83,14 +84,13 @@
         target-vec (target-to-vector (:target response))
         words (text-to-words (:content response))
         content-vec (words-to-vector words dictionary)
+        vec (doall (pmap #(parse-int %) (flatten [num-vec id-vec datetime-vec target-vec content-vec])))
         ]
     (print "ToVector: ")
-    (println response)
-    (println words)
-    (println content-vec)
-    (doall
-     (pmap #(parse-int %)
-           (flatten [num-vec id-vec datetime-vec target-vec content-vec])))))
+    (print response)
+    (println vec)
+    vec
+    ))
 
 (defn response-with-words-to-vector
   [response dictionary id-dictionary]
@@ -180,4 +180,44 @@
                                        0
                                        )) original-responses)
                     ))
-                   zipped-original-matome-responses-list))))
+                zipped-original-matome-responses-list))))
+
+
+(defn to-int-vec
+  [string-vec]
+  (doall (mapv #(parse-int %) string-vec)))
+
+(defn normalize
+  [string-vecs max-word-index max-id-index]
+  (let [int-vecs (doall (mapv
+                     (fn [svec] (to-int-vec svec))
+                     string-vecs))]
+    
+    (doall (map (fn [vec] (let [label  (nth vec 0)
+                                num    (nth vec 1)
+                                id     (nth vec 2)
+                                year   (nth vec 3)
+                                month  (nth vec 4)
+                                day    (nth vec 5)
+                                hour   (nth vec 6)
+                                min    (nth vec 7)
+                                sec    (nth vec 8)
+                                target (nth vec 9)
+                                words  (subvec vec 10)
+                                ]
+                            
+                            (flatten 
+                             [label
+                              (double (/ num 1000))
+                              (double (/ id max-id-index))
+                              (double (/ year 2017))
+                              (double (/ month 12))
+                              (double (/ day 31))
+                              (double (/ hour 24))
+                              (double (/ min 60))
+                              (double (/ sec 60))
+                              (double (/ target 1000))
+                              (mapv #(double (/ % max-word-index)) words)
+                              ]
+                             ))) int-vecs))
+    ))

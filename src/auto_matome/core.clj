@@ -10,6 +10,7 @@
         [auto-matome.thread]
         [auto-matome.morpho]
         [auto-matome.data]
+        [auto-matome.learn]
 ;        [auto-matome.learn]
         )
   (:require [clojure.string :as str]))
@@ -21,7 +22,7 @@
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
 (def page-num 1)
-(def response-file-num 5)
+(def response-file-num 7)
 (def contents-resource "resource/contents.txt")
 (def all-contents-path "resource/all-contents.txt")
 (def contents-resource-base "resource/contents")
@@ -273,10 +274,26 @@
                                         ;    ))
 (defn record-vectors-with-labels
   [padded-vectors labels]
-  (let [vectors-labels (doall (pmap #(flatten (conj (first %) (second %))) (zipmap padded-vectors labels)))
-        csv-strings (doall (map (fn [vl] (str/join "," vl)) vectors-labels))]
-    (io/write-strings-line csv-strings train-data-resource)
+  (io/record-vectors-with-labels padded-vectors labels train-data-resource))
+
+(defn read-vectors-with-labels
+  []
+  (io/read-vectors-with-labels train-data-resource))
+
+(defn get-max-word-index
+  []
+  (let [lines (io/read-dictionary dictionary-path)]
+    (parse-int (:index (last lines)))
     ))
+
+(defn get-max-id-index
+  []
+  (let [lines (io/read-id-dictionary id-dictionary-path)]
+    (parse-int (:index (last lines)))))
+
+(defn normalize-vectors
+  [vecs]
+  (normalize vecs (get-max-word-index) (get-max-id-index)))
 
 (defn refresh-contents
   []
@@ -304,7 +321,7 @@
       (record-id-dictionary id-dictionary)
       (let
           [
-           vecs (doall (map #(response-to-vector % dictionary id-dictionary) responses))
+           vecs (doall (pmap #(response-to-vector % dictionary id-dictionary) responses))
            padded (padding-vectors vecs)
            labels (flatten (generate-response-labels original-responses-list matome-responses-list))
            ]
@@ -497,11 +514,20 @@
         labels (flatten (generate-response-labels original-responses-list matome-responses-list))
         dic (read-dictionary)
         id-dic (read-id-dictionary)
-        vecs (reduce conj (map (fn [x] (map (fn [y] (response-to-vector y dic id-dic)) x)) original-responses-list))
+        vecs (doall (pmap (fn [x] (response-to-vector x dic id-dic)) (flatten original-responses-list)))
         padded (padding-vectors vecs)]
-    (doall (map #(println %) padded))
+                                        ;(doall (map #(println %) labels))
+    (println (count vecs))
+    (println (count labels))
+
+
     (record-vectors-with-labels padded labels)
     ))
+
+(defn test23
+  []
+  (let [vecs (read-vectors-with-labels)]
+    (map #(println %) (normalize-vectors vecs))))
 
 (defn -main
   [& args]

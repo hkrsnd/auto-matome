@@ -33,6 +33,7 @@
   (with-open [r (reader file-path)]
     (loop [line (.readLine r)
            result []]
+      (println line)
       (if (nil? line)
         result
         (recur (.readLine r) (conj (str/split line #",") line))))))
@@ -97,4 +98,23 @@
   [file-path]
   (let [lines (read-contents file-path)]
     (doall (map #(str/split % #",") lines)))
+  )
+
+(defn record-vectors-with-labels
+  [padded-vectors labels file-path]
+  (println "record-vectors-with-labels")
+  (println labels)
+  (println padded-vectors)
+  (let [nested-labels-vectors (doall (map vector labels padded-vectors))
+        labels-vectors (doall (pmap #(flatten %) nested-labels-vectors))
+        string-labels-vectors (doall (map (fn [x] (map (fn [y] (str y)) x)) labels-vectors))
+        csv-strings (doall (map (fn [vl] (str/join "," vl)) string-labels-vectors))]
+    (write-strings-line csv-strings file-path)
+    ))
+
+(defn read-vectors-with-labels
+  [file-path]
+  (let [lines (read-contents file-path)]
+    (doall (pmap #(str/split % #",") lines))
+    )
   )
