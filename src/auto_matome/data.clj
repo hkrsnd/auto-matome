@@ -216,3 +216,4 @@
                               (mapv #(double (/ % max-word-index)) words)
                               ]
                              ))) int-vecs))))
+

@@ -124,3 +124,16 @@
         csv-strings (doall (map (fn [vl] (str/join "," vl)) string-vecs))]
     (write-strings-line csv-strings file-path)    
     ))
+
+(defn csv-to-normalized-data
+  [csv-string]
+  (let [splitted (str/split csv-string #",")]
+    {:label (Integer. (first splitted))
+     :data (mapv #(Double. %) (rest splitted))}
+    ))
+
+(defn read-normalized-data
+  [file-path]
+  (let [lines (read-contents file-path)]
+    (doall (pmap #(csv-to-normalized-data %) lines))
+    ))

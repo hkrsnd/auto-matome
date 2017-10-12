@@ -534,6 +534,10 @@
     (io/record-vectors normalized normalized-train-data-resource)
     ))
 
+(defn test24
+  []
+  (io/read-normalized-data normalized-train-data-resource))
+
 (defn -main
   [& args]
   (println "main"))
