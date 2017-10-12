@@ -538,6 +538,13 @@
   []
   (io/read-normalized-data normalized-train-data-resource))
 
+(defn test25
+  []
+  (let [label-datas (io/read-normalized-data normalized-train-data-resource)
+        labels (mapv #(:label %) label-datas)
+        datas (mapv #(:data %) label-datas)]
+    (learn-main datas labels)))
+
 (defn -main
   [& args]
   (println "main"))
