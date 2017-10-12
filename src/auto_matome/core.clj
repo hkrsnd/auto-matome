@@ -21,8 +21,8 @@
 (require '[auto-matome.io :as io])
 
 (def home-url "http://blog.livedoor.jp/dqnplus/")
-(def page-num 1)
-(def response-file-num 7)
+(def page-num 100)
+;(def response-file-num (- (* page-num 18) 1)) ; 18 articles par page
 (def contents-resource "resource/contents.txt")
 (def all-contents-path "resource/all-contents.txt")
 (def contents-resource-base "resource/contents")
@@ -135,7 +135,7 @@
               )) indexed-paired-responses-list))))
 
 (defn read-responses-from-indexed-files
-  []
+  [response-file-num]
   (let [indexes (range response-file-num)]
     (doall (map (fn [index]
                    (let [matome-responses (io/read-csv-responses (str/join [matome-thread-responses-base index ".csv"]))
@@ -154,7 +154,7 @@
     (io/write-strings-line res-strs file-path)))
 
 (defn read-responses-with-words-from-indexed-files
-  []
+  [response-file-num]
   (let [indexes (range response-file-num)]
     (doall (map (fn [index]
                    (let [matome-responses (io/read-responses-with-words (str/join [matome-thread-responses-with-words-resource-base index ".csv"]))
@@ -164,25 +164,25 @@
                 indexes))))
 
 (defn read-all-original-responses
-  []
+  [response-file-num]
   (let [indexes (range response-file-num)]
     (doall (map (fn [index]
                   (io/read-csv-responses (str/join [original-thread-responses-base index ".csv"]))) indexes))))
 
 (defn read-all-matome-responses
-  []
+  [response-file-num]
   (let [indexes (range response-file-num)]
     (doall (map (fn [index]
                   (io/read-csv-responses (str/join [matome-thread-responses-base index ".csv"]))) indexes))))
 
 (defn read-all-original-responses-with-words
-  []
+  [response-file-num]
   (let [indexes (range response-file-num)]
     (doall (map (fn [index]
                    (io/read-responses-with-words (str/join [original-thread-responses-with-words-resource-base index ".csv"])))
                   indexes))))
 (defn read-all-matome-responses-with-words
-  []
+  [response-file-num]
   (let [indexes (range response-file-num)]
     (doall (map (fn [index]
                    (io/read-responses-with-words (str/join [matome-thread-responses-with-words-resource-base index ".csv"])))
@@ -220,8 +220,8 @@
     words-set))
 
 (defn make-words-set-from-indexed-files
-  []
-  (let [original-responses-with-words (flatten (read-all-original-responses-with-words))
+  [response-file-num]
+  (let [original-responses-with-words (flatten (read-all-original-responses-with-words response-file-num))
         contents (flatten (map #(:content %) original-responses-with-words))
         analyzed (pmap #(-> % morphological-analysis-sentence) contents)
         words-set (set (flatten (map (fn [x] (map (fn [y] (first y)) x)) analyzed)))]
@@ -306,12 +306,13 @@
        original-responses-list (get-responses-each-original-threads original-urls)
        matome-responses-list (get-responses-each-matome-threads matome-urls)
        original-responses-with-words (doall (map #(to-responses-with-words %) original-responses-list))
-       matome-responses-with-words (doall (map #(to-responses-with-words %) matome-responses-list))]
+       matome-responses-with-words (doall (map #(to-responses-with-words %) matome-responses-list))
+       response-file-num (count original-urls)]
     (io/write-strings-line (doall (map #(str/join "," %) original-and-matome-urls)) original-and-matome-urls-resource)
     (record-original-and-matome-responses-list-to-indexed-file original-responses-list matome-responses-list)
     (record-original-and-matome-responses-with-words original-responses-with-words matome-responses-with-words)
     (let [
-          words (make-words-set-from-indexed-files)
+          words (make-words-set-from-indexed-files response-file-num)
           dictionary (from-set-to-dictionary words)
           responses (flatten original-responses-list)
           ids (doall (map #(:id %) responses))
@@ -332,6 +333,53 @@
           (io/record-vectors normalized normalized-train-data-resource)
           )
         ))))
+;  (defn part1
+;    []
+;    (let 
+;      [matome-urls (get-matome-thread-urls)
+;       original-and-matome-urls (get-original-and-matome-urls matome-urls)
+;       original-urls (doall (map #(first %) original-and-matome-urls))
+;       matome-urls (doall (map #(second %) original-and-matome-urls))
+;       original-responses-list (get-responses-each-original-threads original-urls) ;;;;;;
+;       matome-responses-list (get-responses-each-matome-threads matome-urls) ;;;;;;;;;
+;       original-responses-with-words (doall (map #(to-responses-with-words %) original-responses-list))
+;       matome-responses-with-words (doall (map #(to-responses-with-words %) matome-responses-list))
+;       response-file-num (count original-urls)]
+;    (io/write-strings-line (doall (map #(str/join "," %) original-and-matome-urls)) original-and-matome-urls-resource)
+;    (record-original-and-matome-responses-list-to-indexed-file original-responses-list matome-responses-list)
+;    (record-original-and-matome-responses-with-words original-responses-with-words matome-responses-with-words)
+;    {:original-responses-list original-responses-list :matome-responses-list matome-responses-list :responses-file-num response-file-num}
+;    ))
+;  (defn part2
+;    [original-responses-list matome-responses-list response-file-num]
+;    (let [
+;          words (make-words-set-from-indexed-files response-file-num)
+;          dictionary (from-set-to-dictionary words)
+;          responses (flatten original-responses-list)
+;          ids (doall (map #(:id %) responses))
+;          id-dictionary (from-set-to-id-dictionary ids)]
+;      (record-words words)
+;      (record-ids ids)
+;      (record-dictionary dictionary)
+;      (record-id-dictionary id-dictionary)
+;      (let
+;          [
+;           vecs (doall (pmap #(response-to-vector % dictionary id-dictionary) responses))
+;           padded (padding-vectors vecs)
+;           labels (flatten (generate-response-labels original-responses-list matome-responses-list))
+;           ]
+;        (record-vectors-with-labels padded labels)
+;        (let [label-vectors (read-vectors-with-labels)
+;              normalized (normalize-vectors label-vectors)]
+;          (io/record-vectors normalized normalized-train-data-resource)
+;          )
+;        ))
+;    )
+;  
+;  (let [result1 (part1)]
+;    (part2 (:original-responses-list result1) (:matome-responses-list result1) (:response-file-num result1)))
+;  )
+
 
 (defn test01
   []
@@ -380,11 +428,11 @@
     (scr/get-matome-responses matome-src)
     ))
 
-(defn test05
-  []
-  (let [all-responses (read-all-response-csv)]
-    (record-contents all-responses all-contents-path)
-    ))
+;(defn test05
+;  []
+;  (let [all-responses (read-all-response-csv)]
+;    (record-contents all-responses all-contents-path)
+;    ))
 
 (defn test06
   []
@@ -400,12 +448,12 @@
     ))
 
 ;;record ids
-(defn test08
-  []
-  (let [responses (flatten (read-all-original-responses))]
-    (record-ids responses)
-    ))
-
+;(defn test08
+;  []
+;  (let [responses (flatten (read-all-original-responses))]
+;    (record-ids responses)
+;    ))
+;
 ;; record id dictionary
 (defn test09
   []
@@ -415,15 +463,15 @@
     )
   )
 
-(defn test10
-  []
-  (let [responses (flatten (read-all-original-responses))
-        dic (read-dictionary)
-        id-dic (read-id-dictionary)
-        vecs (doall (pmap #(response-to-vector % dic id-dic) responses))
-        padded (padding-vectors vecs)]
-    padded
-    ))
+;(defn test10
+;  []
+;  (let [responses (flatten (read-all-original-responses))
+;        dic (read-dictionary)
+;        id-dic (read-id-dictionary)
+;        vecs (doall (pmap #(response-to-vector % dic id-dic) responses))
+;        padded (padding-vectors vecs)]
+;    padded
+;    ))
 
 (defn test11
   []
@@ -510,22 +558,22 @@
   []
   (make-words-set-from-indexed-files))
 
-(defn test22
-  []
-  (let [original-responses-list  (read-all-original-responses)
-        matome-responses-list (read-all-matome-responses)
-        labels (flatten (generate-response-labels original-responses-list matome-responses-list))
-        dic (read-dictionary)
-        id-dic (read-id-dictionary)
-        vecs (doall (pmap (fn [x] (response-to-vector x dic id-dic)) (flatten original-responses-list)))
-        padded (padding-vectors vecs)]
-                                        ;(doall (map #(println %) labels))
-    (println (count vecs))
-    (println (count labels))
-
-
-    (record-vectors-with-labels padded labels)
-    ))
+;(defn test22
+;  []
+;  (let [original-responses-list  (read-all-original-responses)
+;        matome-responses-list (read-all-matome-responses)
+;        labels (flatten (generate-response-labels original-responses-list matome-responses-list))
+;        dic (read-dictionary)
+;        id-dic (read-id-dictionary)
+;        vecs (doall (pmap (fn [x] (response-to-vector x dic id-dic)) (flatten original-responses-list)))
+;        padded (padding-vectors vecs)]
+;                                        ;(doall (map #(println %) labels))
+;    (println (count vecs))
+;    (println (count labels))
+;
+;
+;    (record-vectors-with-labels padded labels)
+;    ))
 
 (defn test23
   []
