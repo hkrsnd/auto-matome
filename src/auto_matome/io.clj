@@ -116,5 +116,11 @@
   [file-path]
   (let [lines (read-contents file-path)]
     (doall (pmap #(str/split % #",") lines))
-    )
-  )
+    ))
+
+(defn record-vectors
+  [vecs file-path]
+  (let [string-vecs (mapv (fn [x] (map (fn [y] (str y)) x)) vecs)
+        csv-strings (doall (map (fn [vl] (str/join "," vl)) string-vecs))]
+    (write-strings-line csv-strings file-path)    
+    ))

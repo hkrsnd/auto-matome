@@ -40,6 +40,7 @@
 (def id-dictionary-path "resource/id-dictionary.txt")
 (def original-thread-responses-csv-num 3073)
 (def train-data-resource "resource/train-data.csv")
+(def normalized-train-data-resource "resource/normalized-train-data.csv")
 
 ;(defn get-responses
 ;  []
@@ -526,8 +527,10 @@
 
 (defn test23
   []
-  (let [vecs (read-vectors-with-labels)]
-    (map #(println %) (normalize-vectors vecs))))
+  (let [vecs (read-vectors-with-labels)
+        normalized (normalize-vectors vecs)]
+    (io/record-vectors normalized normalized-train-data-resource)
+    ))
 
 (defn -main
   [& args]

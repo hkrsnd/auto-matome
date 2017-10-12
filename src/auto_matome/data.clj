@@ -178,10 +178,8 @@
                     (map (fn [o-res] (if (selected? o-res matome-responses)
                                        1
                                        0
-                                       )) original-responses)
-                    ))
+                                       )) original-responses)))
                 zipped-original-matome-responses-list))))
-
 
 (defn to-int-vec
   [string-vec]
@@ -203,9 +201,7 @@
                                 min    (nth vec 7)
                                 sec    (nth vec 8)
                                 target (nth vec 9)
-                                words  (subvec vec 10)
-                                ]
-                            
+                                words  (subvec vec 10)]
                             (flatten 
                              [label
                               (double (/ num 1000))
@@ -219,5 +215,4 @@
                               (double (/ target 1000))
                               (mapv #(double (/ % max-word-index)) words)
                               ]
-                             ))) int-vecs))
-    ))
+                             ))) int-vecs))))
