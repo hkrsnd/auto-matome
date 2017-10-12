@@ -327,8 +327,10 @@
            labels (flatten (generate-response-labels original-responses-list matome-responses-list))
            ]
         (record-vectors-with-labels padded labels)
-        (doall (map #(println %) vecs))
-        padded
+        (let [label-vectors (read-vectors-with-labels)
+              normalized (normalize-vectors label-vectors)]
+          (io/record-vectors normalized normalized-train-data-resource)
+          )
         ))))
 
 (defn test01
